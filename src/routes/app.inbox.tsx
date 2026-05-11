@@ -1,51 +1,388 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2, Plus, Send } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrganization } from "@/hooks/use-organization";
+import { useAuth } from "@/hooks/use-auth";
+import type { Database } from "@/integrations/supabase/types";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
 
 export const Route = createFileRoute("/app/inbox")({ component: InboxPage });
 
-const convos = [
-  { name: "María López", last: "Quiero saber sobre el plan Pro", channel: "WhatsApp", unread: 2, time: "2m" },
-  { name: "Carlos Ruiz", last: "¿Tienen integración con Shopify?", channel: "Instagram", unread: 0, time: "12m" },
-  { name: "Ana Torres", last: "Gracias por la demo!", channel: "Email", unread: 0, time: "1h" },
-  { name: "Pedro Sánchez", last: "Cuándo podemos agendar?", channel: "Telegram", unread: 1, time: "3h" },
-];
+type Conversation = Database["public"]["Tables"]["conversations"]["Row"];
+type Contact = Database["public"]["Tables"]["contacts"]["Row"];
+type Message = Database["public"]["Tables"]["messages"]["Row"];
+type Channel = Database["public"]["Enums"]["channel_type"];
+
+const CHANNELS: Channel[] = ["whatsapp", "email", "instagram", "messenger", "webchat", "sms", "telegram"];
 
 function InboxPage() {
+  const { currentOrg, loading: orgLoading } = useOrganization();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [contacts, setContacts] = useState<Record<string, Contact>>({});
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const [openNew, setOpenNew] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  async function loadConversations(orgId: string) {
+    setLoading(true);
+    const { data: convs } = await supabase
+      .from("conversations")
+      .select("*")
+      .eq("organization_id", orgId)
+      .order("last_message_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
+    const list = convs ?? [];
+    setConversations(list);
+    const ids = Array.from(new Set(list.map((c) => c.contact_id).filter(Boolean))) as string[];
+    if (ids.length) {
+      const { data: cts } = await supabase.from("contacts").select("*").in("id", ids);
+      const map: Record<string, Contact> = {};
+      (cts ?? []).forEach((c) => (map[c.id] = c));
+      setContacts(map);
+    } else {
+      setContacts({});
+    }
+    if (!activeId && list[0]) setActiveId(list[0].id);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    if (currentOrg) loadConversations(currentOrg.id);
+  }, [currentOrg?.id]);
+
+  // Realtime: conversations
+  useEffect(() => {
+    if (!currentOrg) return;
+    const ch = supabase
+      .channel(`conv:${currentOrg.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "conversations", filter: `organization_id=eq.${currentOrg.id}` },
+        () => loadConversations(currentOrg.id),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [currentOrg?.id]);
+
+  // Load messages for active conversation
+  useEffect(() => {
+    if (!activeId) {
+      setMessages([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", activeId)
+        .order("created_at", { ascending: true });
+      if (!cancelled) setMessages(data ?? []);
+    })();
+    // mark as read
+    supabase.from("conversations").update({ unread_count: 0 }).eq("id", activeId).then();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeId]);
+
+  // Realtime: messages of active conv
+  useEffect(() => {
+    if (!activeId) return;
+    const ch = supabase
+      .channel(`msg:${activeId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${activeId}` },
+        (payload) => {
+          const n = payload.new as Message;
+          setMessages((prev) => (prev.find((m) => m.id === n.id) ? prev : [...prev, n]));
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [activeId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
+
+  const activeConv = useMemo(() => conversations.find((c) => c.id === activeId) ?? null, [conversations, activeId]);
+  const activeContact = activeConv?.contact_id ? contacts[activeConv.contact_id] : null;
+
+  async function sendMessage() {
+    if (!draft.trim() || !activeConv || !currentOrg) return;
+    setSending(true);
+    const content = draft.trim();
+    setDraft("");
+    const { error } = await supabase.from("messages").insert({
+      organization_id: currentOrg.id,
+      conversation_id: activeConv.id,
+      content,
+      direction: "outbound",
+      sender_user_id: user?.id ?? null,
+    });
+    setSending(false);
+    if (error) {
+      toast.error("No se pudo enviar");
+      setDraft(content);
+    }
+  }
+
+  if (orgLoading || loading) {
+    return (
+      <div className="p-8 flex items-center gap-2 text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" /> Cargando inbox...
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-screen">
-      <div className="w-80 border-r border-border/60 overflow-auto">
-        <div className="p-5 border-b border-border/60">
-          <h1 className="font-display text-2xl font-semibold">Inbox</h1>
-          <p className="text-xs text-muted-foreground mt-1">Omnicanal unificado</p>
+    <div className="flex h-[calc(100vh-0px)]">
+      <div className="w-80 border-r border-border/60 overflow-auto flex flex-col">
+        <div className="p-5 border-b border-border/60 flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-semibold">Inbox</h1>
+            <p className="text-xs text-muted-foreground mt-1">Omnicanal · {conversations.length}</p>
+          </div>
+          <Dialog open={openNew} onOpenChange={setOpenNew}>
+            <DialogTrigger asChild>
+              <Button size="icon" variant="outline"><Plus className="h-4 w-4" /></Button>
+            </DialogTrigger>
+            <NewConversationDialog
+              orgId={currentOrg?.id}
+              onCreated={(id) => {
+                setOpenNew(false);
+                if (currentOrg) loadConversations(currentOrg.id).then(() => setActiveId(id));
+              }}
+            />
+          </Dialog>
         </div>
-        <div>
-          {convos.map((c) => (
-            <div key={c.name} className="p-4 border-b border-border/60 hover:bg-surface cursor-pointer transition-colors">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-sm">{c.name}</span>
-                <span className="text-xs text-muted-foreground">{c.time}</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1 truncate">{c.last}</p>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{c.channel}</span>
-                {c.unread > 0 && <span className="text-[10px] bg-primary text-primary-foreground rounded-full px-1.5 py-0.5">{c.unread}</span>}
+        <div className="flex-1">
+          {conversations.length === 0 && (
+            <div className="p-6 text-xs text-muted-foreground text-center">
+              No hay conversaciones aún. Crea la primera con el botón +.
+            </div>
+          )}
+          {conversations.map((c) => {
+            const ct = c.contact_id ? contacts[c.contact_id] : null;
+            const name = ct?.full_name ?? c.subject ?? "Sin nombre";
+            const time = c.last_message_at ?? c.created_at;
+            return (
+              <button
+                key={c.id}
+                onClick={() => setActiveId(c.id)}
+                className={`w-full text-left p-4 border-b border-border/60 hover:bg-surface transition-colors ${activeId === c.id ? "bg-surface" : ""}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-sm truncate">{name}</span>
+                  <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                    {formatDistanceToNow(new Date(time), { addSuffix: false, locale: es })}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 truncate">
+                  {c.subject ?? "—"}
+                </p>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{c.channel}</span>
+                  {c.unread_count > 0 && (
+                    <span className="text-[10px] bg-primary text-primary-foreground rounded-full px-1.5 py-0.5">
+                      {c.unread_count}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col">
+        {activeConv ? (
+          <>
+            <div className="p-5 border-b border-border/60 glass-strong">
+              <div className="font-medium">{activeContact?.full_name ?? activeConv.subject ?? "Conversación"}</div>
+              <div className="text-xs text-muted-foreground capitalize">
+                {activeConv.channel} · {activeConv.status}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-      <div className="flex-1 flex flex-col">
-        <div className="p-5 border-b border-border/60 glass-strong">
-          <div className="font-medium">María López</div>
-          <div className="text-xs text-muted-foreground">WhatsApp · En línea</div>
-        </div>
-        <div className="flex-1 p-6 space-y-3 overflow-auto">
-          <div className="max-w-md rounded-2xl bg-surface px-4 py-2.5 text-sm">Hola, quiero saber sobre el plan Pro</div>
-          <div className="max-w-md rounded-2xl bg-gradient-primary px-4 py-2.5 text-sm text-primary-foreground ml-auto">¡Hola María! El plan Pro incluye automatizaciones ilimitadas e IA avanzada. ¿Quieres una demo?</div>
-        </div>
-        <div className="p-4 border-t border-border/60">
-          <input placeholder="Escribe un mensaje..." className="w-full rounded-xl bg-surface px-4 py-3 text-sm outline-none border border-border/60 focus:border-primary/40" />
-        </div>
+            <div className="flex-1 p-6 space-y-3 overflow-auto">
+              {messages.map((m) => (
+                <div
+                  key={m.id}
+                  className={`max-w-md rounded-2xl px-4 py-2.5 text-sm ${
+                    m.direction === "outbound"
+                      ? "bg-gradient-primary text-primary-foreground ml-auto"
+                      : "bg-surface"
+                  }`}
+                >
+                  {m.content}
+                </div>
+              ))}
+              {messages.length === 0 && (
+                <div className="text-center text-xs text-muted-foreground pt-12">
+                  Aún no hay mensajes. Envía el primero abajo.
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+            <div className="p-4 border-t border-border/60 flex items-center gap-2">
+              <Input
+                placeholder="Escribe un mensaje..."
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                className="flex-1"
+              />
+              <Button onClick={sendMessage} disabled={sending || !draft.trim()}>
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
+            Selecciona una conversación
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+function NewConversationDialog({
+  orgId,
+  onCreated,
+}: {
+  orgId?: string;
+  onCreated: (id: string) => void;
+}) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [channel, setChannel] = useState<Channel>("whatsapp");
+  const [subject, setSubject] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    if (!orgId || !name.trim()) {
+      toast.error("Falta el nombre del contacto");
+      return;
+    }
+    setSaving(true);
+    const { data: contact, error: cErr } = await supabase
+      .from("contacts")
+      .insert({
+        organization_id: orgId,
+        full_name: name.trim(),
+        phone: phone.trim() || null,
+        email: email.trim() || null,
+        source: channel,
+      })
+      .select()
+      .single();
+    if (cErr || !contact) {
+      setSaving(false);
+      toast.error(cErr?.message ?? "No se pudo crear el contacto");
+      return;
+    }
+    const { data: conv, error: convErr } = await supabase
+      .from("conversations")
+      .insert({
+        organization_id: orgId,
+        contact_id: contact.id,
+        channel,
+        subject: subject.trim() || null,
+        status: "open",
+      })
+      .select()
+      .single();
+    setSaving(false);
+    if (convErr || !conv) {
+      toast.error(convErr?.message ?? "No se pudo crear la conversación");
+      return;
+    }
+    toast.success("Conversación creada");
+    onCreated(conv.id);
+  }
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Nueva conversación</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label>Nombre del contacto</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="María López" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>Teléfono</Label>
+            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+52..." />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Email</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>Canal</Label>
+            <Select value={channel} onValueChange={(v) => setChannel(v as Channel)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CHANNELS.map((c) => (
+                  <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Asunto</Label>
+            <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Opcional" />
+          </div>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={submit} disabled={saving}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crear"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }
