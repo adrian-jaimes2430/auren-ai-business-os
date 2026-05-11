@@ -22,6 +22,7 @@ import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AppTeamRouteImport } from './routes/app.team'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppMarketingRouteImport } from './routes/app.marketing'
+import { Route as AppKnowledgeRouteImport } from './routes/app.knowledge'
 import { Route as AppInboxRouteImport } from './routes/app.inbox'
 import { Route as AppCrmRouteImport } from './routes/app.crm'
 import { Route as AppContactsRouteImport } from './routes/app.contacts'
@@ -96,6 +97,11 @@ const AppMarketingRoute = AppMarketingRouteImport.update({
   path: '/marketing',
   getParentRoute: () => AppRoute,
 } as any)
+const AppKnowledgeRoute = AppKnowledgeRouteImport.update({
+  id: '/knowledge',
+  path: '/knowledge',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppInboxRoute = AppInboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
@@ -154,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/app/contacts': typeof AppContactsRoute
   '/app/crm': typeof AppCrmRoute
   '/app/inbox': typeof AppInboxRoute
+  '/app/knowledge': typeof AppKnowledgeRoute
   '/app/marketing': typeof AppMarketingRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/app/contacts': typeof AppContactsRoute
   '/app/crm': typeof AppCrmRoute
   '/app/inbox': typeof AppInboxRoute
+  '/app/knowledge': typeof AppKnowledgeRoute
   '/app/marketing': typeof AppMarketingRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/app/contacts': typeof AppContactsRoute
   '/app/crm': typeof AppCrmRoute
   '/app/inbox': typeof AppInboxRoute
+  '/app/knowledge': typeof AppKnowledgeRoute
   '/app/marketing': typeof AppMarketingRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/team': typeof AppTeamRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/app/contacts'
     | '/app/crm'
     | '/app/inbox'
+    | '/app/knowledge'
     | '/app/marketing'
     | '/app/settings'
     | '/app/team'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/app/contacts'
     | '/app/crm'
     | '/app/inbox'
+    | '/app/knowledge'
     | '/app/marketing'
     | '/app/settings'
     | '/app/team'
@@ -270,6 +281,7 @@ export interface FileRouteTypes {
     | '/app/contacts'
     | '/app/crm'
     | '/app/inbox'
+    | '/app/knowledge'
     | '/app/marketing'
     | '/app/settings'
     | '/app/team'
@@ -384,6 +396,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMarketingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/knowledge': {
+      id: '/app/knowledge'
+      path: '/knowledge'
+      fullPath: '/app/knowledge'
+      preLoaderRoute: typeof AppKnowledgeRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/inbox': {
       id: '/app/inbox'
       path: '/inbox'
@@ -451,6 +470,7 @@ interface AppRouteChildren {
   AppContactsRoute: typeof AppContactsRoute
   AppCrmRoute: typeof AppCrmRoute
   AppInboxRoute: typeof AppInboxRoute
+  AppKnowledgeRoute: typeof AppKnowledgeRoute
   AppMarketingRoute: typeof AppMarketingRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTeamRoute: typeof AppTeamRoute
@@ -465,6 +485,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppContactsRoute: AppContactsRoute,
   AppCrmRoute: AppCrmRoute,
   AppInboxRoute: AppInboxRoute,
+  AppKnowledgeRoute: AppKnowledgeRoute,
   AppMarketingRoute: AppMarketingRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTeamRoute: AppTeamRoute,

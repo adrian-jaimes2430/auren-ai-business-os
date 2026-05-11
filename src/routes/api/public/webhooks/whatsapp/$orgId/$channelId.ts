@@ -183,6 +183,42 @@ async function runAiAutoReply(opts: {
       content: m.content,
     }));
 
+    // Load active knowledge for grounding
+    const { data: kbAll } = await supabaseAdmin
+      .from("knowledge_articles")
+      .select("id, title, content, category, tags, use_count")
+      .eq("organization_id", opts.orgId)
+      .eq("is_active", true)
+      .limit(50);
+
+    const term = opts.latestText.toLowerCase();
+    const scored = (kbAll ?? [])
+      .map((k) => {
+        const hay = `${k.title} ${k.content} ${(k.tags ?? []).join(" ")}`.toLowerCase();
+        const score = term
+          .split(/\s+/)
+          .filter((w) => w.length > 3)
+          .reduce((s, w) => s + (hay.includes(w) ? 1 : 0), 0);
+        return { ...k, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    const used = scored.filter((s) => s.score > 0);
+    for (const k of used) {
+      try {
+        await supabaseAdmin
+          .from("knowledge_articles")
+          .update({ use_count: (k.use_count ?? 0) + 1 })
+          .eq("id", k.id);
+      } catch {}
+    }
+
+    const kbContext = scored.length
+      ? "\n\nINFORMACIÓN OFICIAL DE LA EMPRESA (úsala como única fuente de verdad):\n" +
+        scored.map((k, i) => `[${i + 1}] ${k.title}\n${k.content}`).join("\n\n")
+      : "";
+
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -192,7 +228,8 @@ async function runAiAutoReply(opts: {
           {
             role: "system",
             content:
-              "Eres un agente de atención al cliente de la marca. Responde en el mismo idioma del cliente, de forma breve, profesional y cercana. Nunca inventes información que no tengas. Si no puedes ayudar, ofrece pasar la conversación a un humano.",
+              "Eres un agente de atención al cliente de la marca. Responde en el mismo idioma del cliente, de forma breve, profesional y cercana. Basa tus respuestas EXCLUSIVAMENTE en la información oficial proporcionada más abajo. Nunca inventes datos. Si la información no está disponible, dilo claramente y ofrece pasar la conversación a un humano." +
+              kbContext,
           },
           ...chatMessages,
         ],

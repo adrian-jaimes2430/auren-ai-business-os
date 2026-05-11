@@ -506,6 +506,48 @@ export type Database = {
           },
         ]
       }
+      knowledge_articles: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          organization_id: string
+          tags: string[]
+          title: string
+          updated_at: string
+          use_count: number
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+          use_count?: number
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          use_count?: number
+        }
+        Relationships: []
+      }
       message_templates: {
         Row: {
           body: string

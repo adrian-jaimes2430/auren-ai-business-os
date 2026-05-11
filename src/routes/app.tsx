@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Kanban, Inbox, Workflow, Users, BarChart3, Bot, Settings, Sparkles, LogOut, Contact, Radio, Megaphone,
+  LayoutDashboard, Kanban, Inbox, Workflow, Users, BarChart3, Bot, Settings, Sparkles, LogOut, Contact, Radio, Megaphone, BookOpen,
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useAuth } from "@/hooks/use-auth";
@@ -42,6 +42,7 @@ const nav = [
   { to: "/app/automations", label: "Automatizaciones", icon: Workflow },
   { to: "/app/marketing", label: "Marketing", icon: Megaphone },
   { to: "/app/ai", label: "IA", icon: Bot },
+  { to: "/app/knowledge", label: "Knowledge", icon: BookOpen },
   { to: "/app/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/app/team", label: "Equipo", icon: Users },
   { to: "/app/settings", label: "Ajustes", icon: Settings },
