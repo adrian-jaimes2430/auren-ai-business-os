@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Sparkles, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { AurenLogo } from "@/components/brand/AurenLogo";
 
 export const Route = createFileRoute("/invite/$token")({
   component: InvitePage,
@@ -72,10 +73,7 @@ function InvitePage() {
     <div className="min-h-screen grid place-items-center p-6">
       <div className="w-full max-w-md rounded-2xl glass p-8">
         <Link to="/" className="flex items-center gap-2 mb-6">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary glow-primary">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="font-display font-semibold">AUREN <span className="text-gradient-primary">AI</span></span>
+          <AurenLogo className="w-36" />
         </Link>
 
         {loading || authLoading ? (
