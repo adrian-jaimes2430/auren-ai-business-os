@@ -141,22 +141,111 @@ function InboxPage() {
   const activeConv = useMemo(() => conversations.find((c) => c.id === activeId) ?? null, [conversations, activeId]);
   const activeContact = activeConv?.contact_id ? contacts[activeConv.contact_id] : null;
 
-  async function sendMessage() {
-    if (!draft.trim() || !activeConv || !currentOrg) return;
+  const [aiSuggesting, setAiSuggesting] = useState(false);
+
+  async function sendMessage(textOverride?: string, asAi = false) {
+    const content = (textOverride ?? draft).trim();
+    if (!content || !activeConv || !currentOrg) return;
     setSending(true);
-    const content = draft.trim();
-    setDraft("");
-    const { error } = await supabase.from("messages").insert({
-      organization_id: currentOrg.id,
-      conversation_id: activeConv.id,
-      content,
-      direction: "outbound",
-      sender_user_id: user?.id ?? null,
-    });
-    setSending(false);
+    if (!textOverride) setDraft("");
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-message`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ conversation_id: activeConv.id, content, ai: asAi }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "No se pudo enviar");
+      if (data.delivery_error) toast.warning(`Guardado, pero entrega falló: ${data.delivery_error}`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Error al enviar");
+      if (!textOverride) setDraft(content);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function toggleAutoreply(value: boolean) {
+    if (!activeConv) return;
+    const { error } = await supabase
+      .from("conversations")
+      .update({ ai_autoreply: value })
+      .eq("id", activeConv.id);
     if (error) {
-      toast.error("No se pudo enviar");
-      setDraft(content);
+      toast.error("No se pudo actualizar");
+      return;
+    }
+    setConversations((prev) =>
+      prev.map((c) => (c.id === activeConv.id ? { ...c, ai_autoreply: value } : c)),
+    );
+    toast.success(value ? "AI auto-reply activado" : "AI auto-reply desactivado");
+  }
+
+  async function suggestReply() {
+    if (!activeConv || messages.length === 0) return;
+    setAiSuggesting(true);
+    try {
+      const last20 = messages.slice(-20).map((m) => ({
+        role: m.direction === "inbound" ? "user" : "assistant",
+        content: m.content,
+      }));
+      const { data: sess } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sess.session?.access_token ?? ""}`,
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: "system",
+                content:
+                  "Eres un agente de atención al cliente. Sugiere UNA respuesta breve y profesional para enviar al cliente, sin explicaciones, en el mismo idioma de la conversación.",
+              },
+              ...last20,
+              { role: "user", content: "Sugiere la mejor respuesta para enviar ahora." },
+            ],
+          }),
+        },
+      );
+      if (!res.ok || !res.body) throw new Error("AI no disponible");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let acc = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") continue;
+          try {
+            const json = JSON.parse(data);
+            const delta = json.choices?.[0]?.delta?.content;
+            if (delta) acc += delta;
+          } catch {}
+        }
+      }
+      if (acc.trim()) setDraft(acc.trim());
+    } catch (e: any) {
+      toast.error(e.message ?? "Error al sugerir");
+    } finally {
+      setAiSuggesting(false);
     }
   }
 
