@@ -219,15 +219,40 @@ function BrandingSettings({ orgId, canManage, onSaved }: { orgId: string; canMan
   }, [orgId]);
 
   const upload = async (file: File) => {
+    if (!file.type.startsWith("image/")) return toast.error("El archivo debe ser una imagen (PNG, JPG, SVG, WEBP)");
+    if (file.size > 5 * 1024 * 1024) return toast.error("El logo no puede superar los 5 MB");
+
+    // Instant local preview while uploading
+    const previewUrl = URL.createObjectURL(file);
+    setData((d) => ({ ...d, logo_url: previewUrl }));
     setUploading(true);
-    const ext = file.name.split(".").pop() || "png";
-    const path = `org/${orgId}/logo-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("branding").upload(path, file, { upsert: true, contentType: file.type });
-    if (error) { setUploading(false); return toast.error(error.message); }
-    const { data: pub } = supabase.storage.from("branding").getPublicUrl(path);
-    setData((d) => ({ ...d, logo_url: pub.publicUrl }));
-    setUploading(false);
-    toast.success("Logo cargado");
+
+    try {
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const path = `org/${orgId}/logo-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("branding")
+        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("branding").getPublicUrl(path);
+      const finalUrl = `${pub.publicUrl}?t=${Date.now()}`;
+      // Persist immediately so refresh keeps the logo
+      const { error: updErr } = await supabase
+        .from("organizations")
+        .update({ logo_url: finalUrl })
+        .eq("id", orgId);
+      if (updErr) throw updErr;
+      URL.revokeObjectURL(previewUrl);
+      setData((d) => ({ ...d, logo_url: finalUrl }));
+      toast.success("Logo cargado");
+      onSaved();
+    } catch (err: any) {
+      URL.revokeObjectURL(previewUrl);
+      setData((d) => ({ ...d, logo_url: "" }));
+      toast.error(err?.message ?? "No se pudo subir el logo");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const save = async () => {
