@@ -320,11 +320,21 @@ function InboxPage() {
       <div className="flex-1 flex flex-col">
         {activeConv ? (
           <>
-            <div className="p-5 border-b border-border/60 glass-strong">
-              <div className="font-medium">{activeContact?.full_name ?? activeConv.subject ?? "Conversación"}</div>
-              <div className="text-xs text-muted-foreground capitalize">
-                {activeConv.channel} · {activeConv.status}
+            <div className="p-5 border-b border-border/60 glass-strong flex items-center justify-between gap-4">
+              <div>
+                <div className="font-medium">{activeContact?.full_name ?? activeConv.subject ?? "Conversación"}</div>
+                <div className="text-xs text-muted-foreground capitalize">
+                  {activeConv.channel} · {activeConv.status}
+                </div>
               </div>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                <Bot className="h-4 w-4" />
+                <span>AI auto-reply</span>
+                <Switch
+                  checked={!!activeConv.ai_autoreply}
+                  onCheckedChange={(v) => toggleAutoreply(!!v)}
+                />
+              </label>
             </div>
             <div className="flex-1 p-6 space-y-3 overflow-auto">
               {messages.map((m) => (
@@ -336,6 +346,11 @@ function InboxPage() {
                       : "bg-surface"
                   }`}
                 >
+                  {m.is_ai && (
+                    <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider opacity-80 mb-1">
+                      <Bot className="h-3 w-3" /> AI
+                    </div>
+                  )}
                   {m.content}
                 </div>
               ))}
@@ -347,6 +362,16 @@ function InboxPage() {
               <div ref={messagesEndRef} />
             </div>
             <div className="p-4 border-t border-border/60 flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={suggestReply}
+                disabled={aiSuggesting || messages.length === 0}
+                title="Sugerir respuesta con IA"
+              >
+                {aiSuggesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              </Button>
               <Input
                 placeholder="Escribe un mensaje..."
                 value={draft}
@@ -359,7 +384,7 @@ function InboxPage() {
                 }}
                 className="flex-1"
               />
-              <Button onClick={sendMessage} disabled={sending || !draft.trim()}>
+              <Button onClick={() => sendMessage()} disabled={sending || !draft.trim()}>
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
