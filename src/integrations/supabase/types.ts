@@ -14,6 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
+      automation_runs: {
+        Row: {
+          automation_id: string
+          created_at: string
+          id: string
+          organization_id: string
+          payload: Json
+          result: Json
+          status: string
+        }
+        Insert: {
+          automation_id: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          payload?: Json
+          result?: Json
+          status?: string
+        }
+        Update: {
+          automation_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          payload?: Json
+          result?: Json
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_runs_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          name: string
+          organization_id: string
+          run_count: number
+          steps: Json
+          trigger: Database["public"]["Enums"]["automation_trigger"]
+          trigger_config: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name: string
+          organization_id: string
+          run_count?: number
+          steps?: Json
+          trigger: Database["public"]["Enums"]["automation_trigger"]
+          trigger_config?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name?: string
+          organization_id?: string
+          run_count?: number
+          steps?: Json
+          trigger?: Database["public"]["Enums"]["automation_trigger"]
+          trigger_config?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           created_at: string
@@ -475,6 +576,13 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "admin" | "supervisor" | "agent" | "user"
+      automation_trigger:
+        | "contact_created"
+        | "deal_created"
+        | "deal_stage_changed"
+        | "message_received"
+        | "tag_added"
+        | "manual"
       channel_type:
         | "whatsapp"
         | "email"
@@ -613,6 +721,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "admin", "supervisor", "agent", "user"],
+      automation_trigger: [
+        "contact_created",
+        "deal_created",
+        "deal_stage_changed",
+        "message_received",
+        "tag_added",
+        "manual",
+      ],
       channel_type: [
         "whatsapp",
         "email",
