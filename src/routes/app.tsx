@@ -38,6 +38,7 @@ const nav = [
   { to: "/app/crm", label: "CRM", icon: Kanban },
   { to: "/app/contacts", label: "Contactos", icon: Contact },
   { to: "/app/inbox", label: "Inbox", icon: Inbox },
+  { to: "/app/channels", label: "Canales", icon: Radio },
   { to: "/app/automations", label: "Automatizaciones", icon: Workflow },
   { to: "/app/ai", label: "IA", icon: Bot },
   { to: "/app/analytics", label: "Analytics", icon: BarChart3 },
