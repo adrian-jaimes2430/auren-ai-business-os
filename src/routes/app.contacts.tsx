@@ -221,7 +221,7 @@ function ContactsPage() {
               <thead className="text-xs uppercase tracking-wider text-muted-foreground">
                 <tr className="border-b border-border/60">
                   <th className="text-left font-medium px-5 py-3">Contacto</th>
-                  <th className="text-left font-medium px-5 py-3">Contacto</th>
+                  <th className="text-left font-medium px-5 py-3">Comunicación</th>
                   <th className="text-left font-medium px-5 py-3">Etiquetas</th>
                   <th className="text-left font-medium px-5 py-3">Origen</th>
                   <th className="text-left font-medium px-5 py-3">Creado</th>
