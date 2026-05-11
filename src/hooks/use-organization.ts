@@ -88,6 +88,11 @@ export async function createOrganizationWithDefaults(input: {
     .single();
   if (orgErr || !org) throw orgErr ?? new Error("No se pudo crear la organización");
 
+  const { error: memberErr } = await supabase
+    .from("organization_members")
+    .upsert({ organization_id: org.id, user_id: input.ownerId, role: "owner" }, { onConflict: "organization_id,user_id" });
+  if (memberErr) throw memberErr;
+
   const { data: pipeline, error: pErr } = await supabase
     .from("pipelines")
     .insert({ organization_id: org.id, name: "Pipeline principal", is_default: true })
@@ -106,6 +111,17 @@ export async function createOrganizationWithDefaults(input: {
 
   const { error: stErr } = await supabase.from("pipeline_stages").insert(stages);
   if (stErr) throw stErr;
+
+  await supabase.from("subscriptions").upsert(
+    {
+      organization_id: org.id,
+      plan: "starter",
+      status: "trial",
+      trial_ends_at: new Date(Date.now() + 14 * 86400000).toISOString(),
+      current_period_end: new Date(Date.now() + 14 * 86400000).toISOString(),
+    },
+    { onConflict: "organization_id", ignoreDuplicates: true },
+  );
 
   return org;
 }
