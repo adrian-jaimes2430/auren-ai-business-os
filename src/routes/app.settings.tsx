@@ -19,12 +19,16 @@ export const Route = createFileRoute("/app/settings")({
   head: () => ({ meta: [{ title: "Ajustes — AUREN AI" }] }),
 });
 
-const PLANS = [
-  { id: "starter", name: "Starter", price: "$0", desc: "Hasta 3 usuarios · 500 contactos", features: ["CRM básico", "Inbox unificado", "1,000 mensajes IA/mes"] },
-  { id: "growth", name: "Growth", price: "$49", desc: "Hasta 10 usuarios · 10k contactos", features: ["Automatizaciones ilimitadas", "Analytics avanzado", "10k mensajes IA/mes"], popular: true },
-  { id: "scale", name: "Scale", price: "$149", desc: "Equipos en crecimiento", features: ["Usuarios ilimitados", "Multi-pipeline", "100k mensajes IA/mes", "API + Webhooks"] },
-  { id: "enterprise", name: "Enterprise", price: "Custom", desc: "Soporte dedicado", features: ["SLA 99.99%", "SSO/SAML", "Onboarding 1-1"] },
-];
+import { PLANS, PLAN_BY_ID, planRank, type PlanId } from "@/config/plans";
+import { useSubscription } from "@/hooks/use-subscription";
+import { usePaddleCheckout } from "@/hooks/use-paddle-checkout";
+import { useServerFn } from "@tanstack/react-start";
+import { changePlan, cancelSubscription, createPortalSession } from "@/utils/payments.functions";
+import { getPaddleEnvironment } from "@/lib/paddle";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const TIMEZONES = ["UTC", "America/Mexico_City", "America/Bogota", "America/Argentina/Buenos_Aires", "America/Lima", "America/Santiago", "Europe/Madrid", "America/New_York", "America/Los_Angeles"];
 const LOCALES = [{ id: "es", label: "Español" }, { id: "en", label: "English" }, { id: "pt", label: "Português" }];
