@@ -186,7 +186,7 @@ async function runAiAutoReply(opts: {
     // Load active knowledge for grounding
     const { data: kbAll } = await supabaseAdmin
       .from("knowledge_articles")
-      .select("id, title, content, category, tags")
+      .select("id, title, content, category, tags, use_count")
       .eq("organization_id", opts.orgId)
       .eq("is_active", true)
       .limit(50);
@@ -204,16 +204,14 @@ async function runAiAutoReply(opts: {
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
 
-    const usedIds = scored.filter((s) => s.score > 0).map((s) => s.id);
-    if (usedIds.length) {
-      await supabaseAdmin.rpc("noop").catch(() => {}); // best-effort, no-op
-      for (const id of usedIds) {
+    const used = scored.filter((s) => s.score > 0);
+    for (const k of used) {
+      try {
         await supabaseAdmin
           .from("knowledge_articles")
-          .update({ use_count: (kbAll!.find((k) => k.id === id)?.use_count ?? 0) + 1 } as any)
-          .eq("id", id)
-          .catch?.(() => {});
-      }
+          .update({ use_count: (k.use_count ?? 0) + 1 })
+          .eq("id", k.id);
+      } catch {}
     }
 
     const kbContext = scored.length
