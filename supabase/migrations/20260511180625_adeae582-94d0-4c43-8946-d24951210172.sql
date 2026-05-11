@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.create_workspace_with_defaults(text);
