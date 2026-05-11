@@ -426,31 +426,46 @@ export type Database = {
       }
       organizations: {
         Row: {
+          brand_color: string | null
           created_at: string
           id: string
+          locale: string | null
+          logo_url: string | null
           name: string
           owner_id: string
           plan: string
           slug: string
+          timezone: string | null
           updated_at: string
+          website: string | null
         }
         Insert: {
+          brand_color?: string | null
           created_at?: string
           id?: string
+          locale?: string | null
+          logo_url?: string | null
           name: string
           owner_id: string
           plan?: string
           slug: string
+          timezone?: string | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
+          brand_color?: string | null
           created_at?: string
           id?: string
+          locale?: string | null
+          logo_url?: string | null
           name?: string
           owner_id?: string
           plan?: string
           slug?: string
+          timezone?: string | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
