@@ -15,7 +15,10 @@ function getSupabase() {
   return _supabase;
 }
 
-const PRICE_TO_PLAN: Record<string, string> = {
+type PlanType = "starter" | "pro" | "business" | "enterprise";
+type SubStatus = "trial" | "active" | "past_due" | "canceled" | "pending" | "suspended";
+
+const PRICE_TO_PLAN: Record<string, PlanType> = {
   starter_monthly: "starter",
   pro_monthly: "pro",
   business_monthly: "business",
