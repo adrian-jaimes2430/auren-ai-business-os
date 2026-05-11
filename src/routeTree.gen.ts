@@ -30,6 +30,7 @@ import { Route as AppChannelsRouteImport } from './routes/app.channels'
 import { Route as AppAutomationsRouteImport } from './routes/app.automations'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppAiRouteImport } from './routes/app.ai'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicWebhooksWhatsappOrgIdChannelIdRouteImport } from './routes/api/public/webhooks/whatsapp/$orgId/$channelId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -137,6 +138,12 @@ const AppAiRoute = AppAiRouteImport.update({
   path: '/ai',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebhooksWhatsappOrgIdChannelIdRoute =
   ApiPublicWebhooksWhatsappOrgIdChannelIdRouteImport.update({
     id: '/api/public/webhooks/whatsapp/$orgId/$channelId',
@@ -166,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/webhooks/whatsapp/$orgId/$channelId': typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
 export interface FileRoutesByTo {
@@ -189,6 +197,7 @@ export interface FileRoutesByTo {
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app': typeof AppIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/webhooks/whatsapp/$orgId/$channelId': typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
 export interface FileRoutesById {
@@ -214,6 +223,7 @@ export interface FileRoutesById {
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/webhooks/whatsapp/$orgId/$channelId': typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
 export interface FileRouteTypes {
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/invite/$token'
     | '/app/'
+    | '/api/public/payments/webhook'
     | '/api/public/webhooks/whatsapp/$orgId/$channelId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/invite/$token'
     | '/app'
+    | '/api/public/payments/webhook'
     | '/api/public/webhooks/whatsapp/$orgId/$channelId'
   id:
     | '__root__'
@@ -287,6 +299,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/invite/$token'
     | '/app/'
+    | '/api/public/payments/webhook'
     | '/api/public/webhooks/whatsapp/$orgId/$channelId'
   fileRoutesById: FileRoutesById
 }
@@ -300,6 +313,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicWebhooksWhatsappOrgIdChannelIdRoute: typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
 
@@ -452,6 +466,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/whatsapp/$orgId/$channelId': {
       id: '/api/public/webhooks/whatsapp/$orgId/$channelId'
       path: '/api/public/webhooks/whatsapp/$orgId/$channelId'
@@ -504,6 +525,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   InviteTokenRoute: InviteTokenRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicWebhooksWhatsappOrgIdChannelIdRoute:
     ApiPublicWebhooksWhatsappOrgIdChannelIdRoute,
 }

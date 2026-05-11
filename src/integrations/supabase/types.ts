@@ -881,42 +881,57 @@ export type Database = {
       subscriptions: {
         Row: {
           assigned_by: string | null
+          cancel_at_period_end: boolean
           created_at: string
           current_period_end: string | null
           current_period_start: string
+          environment: string
           id: string
           mrr_cents: number
           notes: string | null
           organization_id: string
+          paddle_customer_id: string | null
+          paddle_subscription_id: string | null
           plan: Database["public"]["Enums"]["plan_type"]
+          price_id: string | null
           status: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at: string | null
           updated_at: string
         }
         Insert: {
           assigned_by?: string | null
+          cancel_at_period_end?: boolean
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string
+          environment?: string
           id?: string
           mrr_cents?: number
           notes?: string | null
           organization_id: string
+          paddle_customer_id?: string | null
+          paddle_subscription_id?: string | null
           plan?: Database["public"]["Enums"]["plan_type"]
+          price_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
           updated_at?: string
         }
         Update: {
           assigned_by?: string | null
+          cancel_at_period_end?: boolean
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string
+          environment?: string
           id?: string
           mrr_cents?: number
           notes?: string | null
           organization_id?: string
+          paddle_customer_id?: string | null
+          paddle_subscription_id?: string | null
           plan?: Database["public"]["Enums"]["plan_type"]
+          price_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
           updated_at?: string
