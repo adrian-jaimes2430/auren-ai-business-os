@@ -18,9 +18,9 @@ export function Pricing({ heading = true }: { heading?: boolean }) {
       )}
       <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
         {PLANS.map((p) => {
-          const target = user
-            ? { to: "/app/settings", search: { upgrade: p.id } as const }
-            : { to: "/register", search: { plan: p.id } as const };
+          const href = user
+            ? `/app/settings?upgrade=${p.id}`
+            : `/register?plan=${p.id}`;
           return (
             <div
               key={p.id}
