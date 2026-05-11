@@ -958,6 +958,29 @@ export type Database = {
     }
     Functions: {
       accept_invitation: { Args: { _token: string }; Returns: string }
+      create_workspace_with_defaults: {
+        Args: { _name: string }
+        Returns: {
+          brand_color: string | null
+          created_at: string
+          id: string
+          locale: string | null
+          logo_url: string | null
+          name: string
+          owner_id: string
+          plan: string
+          slug: string
+          timezone: string | null
+          updated_at: string
+          website: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "organizations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_org_role: {
         Args: {
           _org_id: string
