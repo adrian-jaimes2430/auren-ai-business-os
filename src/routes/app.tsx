@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Kanban, Inbox, Workflow, Users, BarChart3, Bot, Settings, Sparkles, LogOut,
+  LayoutDashboard, Kanban, Inbox, Workflow, Users, BarChart3, Bot, Settings, Sparkles, LogOut, Contact,
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useAuth } from "@/hooks/use-auth";
@@ -36,6 +36,7 @@ function AppGate() {
 const nav = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/app/crm", label: "CRM", icon: Kanban },
+  { to: "/app/contacts", label: "Contactos", icon: Contact },
   { to: "/app/inbox", label: "Inbox", icon: Inbox },
   { to: "/app/automations", label: "Automatizaciones", icon: Workflow },
   { to: "/app/ai", label: "IA", icon: Bot },
