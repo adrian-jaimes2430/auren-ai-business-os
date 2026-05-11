@@ -27,6 +27,7 @@ import { Route as AppContactsRouteImport } from './routes/app.contacts'
 import { Route as AppAutomationsRouteImport } from './routes/app.automations'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppAiRouteImport } from './routes/app.ai'
+import { Route as ApiPublicWebhooksWhatsappOrgIdChannelIdRouteImport } from './routes/api/public/webhooks/whatsapp/$orgId/$channelId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -118,6 +119,12 @@ const AppAiRoute = AppAiRouteImport.update({
   path: '/ai',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicWebhooksWhatsappOrgIdChannelIdRoute =
+  ApiPublicWebhooksWhatsappOrgIdChannelIdRouteImport.update({
+    id: '/api/public/webhooks/whatsapp/$orgId/$channelId',
+    path: '/api/public/webhooks/whatsapp/$orgId/$channelId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/webhooks/whatsapp/$orgId/$channelId': typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -157,6 +165,7 @@ export interface FileRoutesByTo {
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app': typeof AppIndexRoute
+  '/api/public/webhooks/whatsapp/$orgId/$channelId': typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -178,6 +187,7 @@ export interface FileRoutesById {
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/webhooks/whatsapp/$orgId/$channelId': typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/invite/$token'
     | '/app/'
+    | '/api/public/webhooks/whatsapp/$orgId/$channelId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/invite/$token'
     | '/app'
+    | '/api/public/webhooks/whatsapp/$orgId/$channelId'
   id:
     | '__root__'
     | '/'
@@ -239,6 +251,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/invite/$token'
     | '/app/'
+    | '/api/public/webhooks/whatsapp/$orgId/$channelId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -251,6 +264,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  ApiPublicWebhooksWhatsappOrgIdChannelIdRoute: typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -381,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/webhooks/whatsapp/$orgId/$channelId': {
+      id: '/api/public/webhooks/whatsapp/$orgId/$channelId'
+      path: '/api/public/webhooks/whatsapp/$orgId/$channelId'
+      fullPath: '/api/public/webhooks/whatsapp/$orgId/$channelId'
+      preLoaderRoute: typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -420,6 +441,8 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   InviteTokenRoute: InviteTokenRoute,
+  ApiPublicWebhooksWhatsappOrgIdChannelIdRoute:
+    ApiPublicWebhooksWhatsappOrgIdChannelIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
