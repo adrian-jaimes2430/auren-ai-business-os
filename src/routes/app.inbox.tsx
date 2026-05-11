@@ -39,7 +39,7 @@ const CHANNELS: Channel[] = ["whatsapp", "email", "instagram", "messenger", "web
 
 function InboxPage() {
   const { currentOrg, loading: orgLoading } = useOrganization();
-  const { user } = useAuth();
+  
   const [loading, setLoading] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [contacts, setContacts] = useState<Record<string, Contact>>({});
