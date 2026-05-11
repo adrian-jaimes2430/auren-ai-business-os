@@ -65,63 +65,14 @@ export function useOrganization() {
   };
 }
 
-function slugify(input: string) {
-  return input
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-    .slice(0, 40) || `org-${Math.random().toString(36).slice(2, 8)}`;
-}
-
 export async function createOrganizationWithDefaults(input: {
   name: string;
   ownerId: string;
 }) {
-  const baseSlug = slugify(input.name);
-  const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
-
-  const { data: org, error: orgErr } = await supabase
-    .from("organizations")
-    .insert({ name: input.name, slug, owner_id: input.ownerId, plan: "starter" })
-    .select()
-    .single();
-  if (orgErr || !org) throw orgErr ?? new Error("No se pudo crear la organización");
-
-  const { error: memberErr } = await supabase
-    .from("organization_members")
-    .upsert({ organization_id: org.id, user_id: input.ownerId, role: "owner" }, { onConflict: "organization_id,user_id" });
-  if (memberErr) throw memberErr;
-
-  const { data: pipeline, error: pErr } = await supabase
-    .from("pipelines")
-    .insert({ organization_id: org.id, name: "Pipeline principal", is_default: true })
-    .select()
-    .single();
-  if (pErr || !pipeline) throw pErr ?? new Error("No se pudo crear el pipeline");
-
-  const stages = [
-    { name: "Nuevo lead", position: 0, color: "#60a5fa", is_won: false, is_lost: false },
-    { name: "Contactado", position: 1, color: "#a78bfa", is_won: false, is_lost: false },
-    { name: "Calificado", position: 2, color: "#f59e0b", is_won: false, is_lost: false },
-    { name: "Propuesta", position: 3, color: "#10b981", is_won: false, is_lost: false },
-    { name: "Ganado", position: 4, color: "#22c55e", is_won: true, is_lost: false },
-    { name: "Perdido", position: 5, color: "#ef4444", is_won: false, is_lost: true },
-  ].map((s) => ({ ...s, pipeline_id: pipeline.id, organization_id: org.id }));
-
-  const { error: stErr } = await supabase.from("pipeline_stages").insert(stages);
-  if (stErr) throw stErr;
-
-  await supabase.from("subscriptions").upsert(
-    {
-      organization_id: org.id,
-      plan: "starter",
-      status: "trial",
-      trial_ends_at: new Date(Date.now() + 14 * 86400000).toISOString(),
-      current_period_end: new Date(Date.now() + 14 * 86400000).toISOString(),
-    },
-    { onConflict: "organization_id", ignoreDuplicates: true },
-  );
-
-  return org;
+  if (!input.ownerId) throw new Error("No se pudo identificar al usuario");
+  const { data: org, error } = await (supabase as any).rpc("create_workspace_with_defaults", {
+    _name: input.name,
+  });
+  if (error || !org) throw error ?? new Error("No se pudo crear la organización");
+  return org as Organization;
 }

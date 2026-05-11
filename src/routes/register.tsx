@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AurenLogo } from "@/components/brand/AurenLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -78,9 +79,7 @@ function RegisterPage() {
       <div className="hidden lg:flex relative items-center justify-center grid-bg overflow-hidden order-1 lg:order-2">
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="relative text-center px-12">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-ai glow-ai">
-            <Sparkles className="h-6 w-6" style={{ color: "var(--ai-foreground)" }} />
-          </div>
+          <AurenLogo className="mx-auto w-56" />
           <h2 className="mt-6 font-display text-4xl font-semibold">Empieza con <span className="text-gradient-ai">IA</span></h2>
           <p className="mt-3 text-muted-foreground max-w-sm mx-auto">Únete a empresas modernas que escalan con AUREN AI.</p>
         </div>

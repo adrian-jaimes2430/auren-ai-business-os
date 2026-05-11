@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
+import { AurenLogo } from "@/components/brand/AurenLogo";
 
 export function Footer() {
   return (
     <footer className="border-t border-border/60 mt-32">
       <div className="mx-auto max-w-6xl px-6 py-12 grid gap-8 md:grid-cols-4 text-sm">
         <div>
-          <div className="font-display text-lg font-semibold">AUREN <span className="text-gradient-primary">AI</span></div>
+          <AurenLogo className="w-36" />
           <p className="mt-3 text-muted-foreground">El sistema operativo comercial inteligente de Company A&amp;O Ecosystem.</p>
         </div>
         <div>

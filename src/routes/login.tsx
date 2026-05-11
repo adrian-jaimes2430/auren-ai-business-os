@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AurenLogo } from "@/components/brand/AurenLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -47,9 +48,7 @@ function LoginPage() {
       <div className="hidden lg:flex relative items-center justify-center grid-bg overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="relative text-center px-12">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-primary glow-primary">
-            <Sparkles className="h-6 w-6 text-primary-foreground" />
-          </div>
+          <AurenLogo className="mx-auto w-56" />
           <h2 className="mt-6 font-display text-4xl font-semibold">
             Bienvenido a <span className="text-gradient-primary">AUREN AI</span>
           </h2>

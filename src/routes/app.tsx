@@ -1,11 +1,12 @@
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Kanban, Inbox, Workflow, Users, BarChart3, Bot, Settings, Sparkles, LogOut, Contact, Radio, Megaphone, BookOpen,
+  LayoutDashboard, Kanban, Inbox, Workflow, Users, BarChart3, Bot, Settings, LogOut, Contact, Radio, Megaphone, BookOpen,
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrganization } from "@/hooks/use-organization";
 import { OrgOnboarding } from "@/components/app/OrgOnboarding";
+import { AurenLogo } from "@/components/brand/AurenLogo";
 
 export const Route = createFileRoute("/app")({
   component: AppLayoutWrapper,
@@ -61,10 +62,7 @@ function AppLayout() {
     <div className="min-h-screen flex">
       <aside className="w-64 shrink-0 border-r border-border/60 glass-strong flex flex-col">
         <Link to="/" className="flex items-center gap-2 px-5 py-5 border-b border-border/60">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-primary glow-primary">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="font-display font-semibold">AUREN <span className="text-gradient-primary">AI</span></span>
+          <AurenLogo className="w-36" />
         </Link>
         <nav className="p-3 space-y-1 flex-1">
           {nav.map((n) => {
