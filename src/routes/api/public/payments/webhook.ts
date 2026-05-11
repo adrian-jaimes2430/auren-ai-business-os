@@ -32,8 +32,7 @@ const PRICE_TO_MRR: Record<string, number> = {
   enterprise_monthly: 19900,
 };
 
-function mapStatus(paddleStatus: string): string {
-  // map to our subscription_status enum: trial | active | past_due | canceled
+function mapStatus(paddleStatus: string): SubStatus {
   switch (paddleStatus) {
     case "trialing":
       return "trial";
