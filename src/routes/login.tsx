@@ -97,6 +97,11 @@ function LoginPage() {
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
             </Button>
+            <div className="text-right">
+              <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
           </form>
           <p className="mt-6 text-sm text-muted-foreground text-center">
             ¿No tienes cuenta?{" "}
