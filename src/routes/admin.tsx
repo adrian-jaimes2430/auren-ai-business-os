@@ -60,7 +60,7 @@ const STATUS_META: Record<SubStatus, { label: string; tone: string }> = {
   canceled:  { label: "Cancelada",   tone: "bg-muted text-muted-foreground border-border" },
 };
 
-const PLAN_PRICE: Record<PlanType, number> = { starter: 0, pro: 4900, business: 14900, enterprise: 49900 };
+const PLAN_PRICE: Record<PlanType, number> = { starter: 2900, pro: 7900, business: 12900, enterprise: 19900 };
 
 function AdminPanel() {
   const navigate = useNavigate();
@@ -366,10 +366,10 @@ function EditDialog({ org, onClose, onSaved, adminId }: { org: OrgRow | null; on
             <Select value={plan} onValueChange={(v) => { setPlan(v as PlanType); setMrr(String(PLAN_PRICE[v as PlanType] / 100)); }}>
               <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="starter">Starter (gratis)</SelectItem>
-                <SelectItem value="pro">Pro ($49)</SelectItem>
-                <SelectItem value="business">Business ($149)</SelectItem>
-                <SelectItem value="enterprise">Enterprise ($499)</SelectItem>
+                <SelectItem value="starter">Starter ($29)</SelectItem>
+                <SelectItem value="pro">Pro ($79)</SelectItem>
+                <SelectItem value="business">Business ($129)</SelectItem>
+                <SelectItem value="enterprise">Enterprise ($199)</SelectItem>
               </SelectContent>
             </Select>
           </div>

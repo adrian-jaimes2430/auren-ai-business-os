@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
 function NotFoundComponent() {
   return (
@@ -107,6 +108,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body>
+        <PaymentTestModeBanner />
         {children}
         <Scripts />
       </body>
