@@ -42,6 +42,7 @@ const nav = [
   { to: "/app/automations", label: "Automatizaciones", icon: Workflow },
   { to: "/app/marketing", label: "Marketing", icon: Megaphone },
   { to: "/app/ai", label: "IA", icon: Bot },
+  { to: "/app/knowledge", label: "Knowledge", icon: BookOpen },
   { to: "/app/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/app/team", label: "Equipo", icon: Users },
   { to: "/app/settings", label: "Ajustes", icon: Settings },
