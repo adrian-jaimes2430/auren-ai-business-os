@@ -36,6 +36,7 @@ function AppGate() {
 const nav = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/app/crm", label: "CRM", icon: Kanban },
+  { to: "/app/contacts", label: "Contactos", icon: Contact },
   { to: "/app/inbox", label: "Inbox", icon: Inbox },
   { to: "/app/automations", label: "Automatizaciones", icon: Workflow },
   { to: "/app/ai", label: "IA", icon: Bot },
