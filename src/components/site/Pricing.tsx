@@ -1,6 +1,5 @@
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "@tanstack/react-router";
 import { PLANS } from "@/config/plans";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -42,9 +41,7 @@ export function Pricing({ heading = true }: { heading?: boolean }) {
                 className={`mt-6 w-full ${p.popular ? "bg-gradient-primary text-primary-foreground hover:opacity-90" : ""}`}
                 variant={p.popular ? "default" : "outline"}
               >
-                {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                {/* @ts-ignore router type for dynamic href */}
-                <Link to={href}>{user ? "Elegir plan" : "Empezar"}</Link>
+                <a href={href}>{user ? "Elegir plan" : "Empezar"}</a>
               </Button>
               <ul className="mt-6 space-y-3 text-sm">
                 {p.features.map((f) => (
