@@ -332,39 +332,154 @@ function BrandingSettings({ orgId, canManage, onSaved }: { orgId: string; canMan
 
 /* ---------------- Plan ---------------- */
 function PlanSettings({ orgId, currentPlan, canManage, onSaved }: { orgId: string; currentPlan: string; canManage: boolean; onSaved: () => void }) {
-  const [updating, setUpdating] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { subscription, isPaid, refresh: refreshSub } = useSubscription(orgId);
+  const { openCheckout, loading: checkoutLoading } = usePaddleCheckout();
+  const changePlanFn = useServerFn(changePlan);
+  const cancelFn = useServerFn(cancelSubscription);
+  const portalFn = useServerFn(createPortalSession);
 
-  const choose = async (plan: string) => {
-    if (plan === currentPlan) return;
-    setUpdating(plan);
-    const { error } = await supabase.from("organizations").update({ plan }).eq("id", orgId);
-    setUpdating(null);
-    if (error) return toast.error(error.message);
-    toast.success(`Plan ${plan} activado`);
-    onSaved();
+  const [busyPlan, setBusyPlan] = useState<PlanId | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
+
+  // Auto-open checkout if redirected from /pricing or /register with ?upgrade=
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const upgrade = params.get("upgrade") as PlanId | null;
+    if (upgrade && PLAN_BY_ID[upgrade] && canManage && !isPaid) {
+      handleSelect(upgrade);
+      params.delete("upgrade");
+      const qs = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canManage, isPaid]);
+
+  const handleSelect = async (planId: PlanId) => {
+    if (!user || !canManage) return;
+    const plan = PLAN_BY_ID[planId];
+    setBusyPlan(planId);
+    try {
+      // No active Paddle subscription -> open new checkout
+      if (!isPaid || !subscription?.paddle_subscription_id) {
+        await openCheckout({
+          priceId: plan.priceId,
+          organizationId: orgId,
+          customerEmail: user.email ?? undefined,
+        });
+        return;
+      }
+      // Already subscribed -> upgrade or downgrade
+      const currentRank = planRank(currentPlan as PlanId);
+      const targetRank = planRank(planId);
+      if (currentRank === targetRank) return;
+      const mode: "upgrade" | "downgrade" = targetRank > currentRank ? "upgrade" : "downgrade";
+      await changePlanFn({
+        data: {
+          subscriptionId: subscription.paddle_subscription_id,
+          newPriceId: plan.priceId,
+          mode,
+          environment: getPaddleEnvironment(),
+        },
+      });
+      toast.success(
+        mode === "upgrade"
+          ? `Upgrade a ${plan.name} aplicado (prorrateado).`
+          : `Downgrade a ${plan.name} programado al final del periodo.`,
+      );
+      await refreshSub();
+      onSaved();
+    } catch (err: any) {
+      toast.error(err?.message ?? "No se pudo cambiar el plan");
+    } finally {
+      setBusyPlan(null);
+    }
   };
 
+  const handleCancel = async () => {
+    if (!subscription?.paddle_subscription_id) return;
+    try {
+      await cancelFn({
+        data: {
+          subscriptionId: subscription.paddle_subscription_id,
+          environment: getPaddleEnvironment(),
+        },
+      });
+      toast.success("Suscripción cancelada. Volverás al plan Starter.");
+      await refreshSub();
+      onSaved();
+    } catch (err: any) {
+      toast.error(err?.message ?? "No se pudo cancelar");
+    } finally {
+      setConfirmCancel(false);
+    }
+  };
+
+  const handlePortal = async () => {
+    if (!subscription?.paddle_customer_id || !subscription?.paddle_subscription_id) return;
+    setOpeningPortal(true);
+    try {
+      const res = await portalFn({
+        data: {
+          customerId: subscription.paddle_customer_id,
+          subscriptionIds: [subscription.paddle_subscription_id],
+          environment: getPaddleEnvironment(),
+        },
+      });
+      window.open(res.overviewUrl, "_blank", "noopener");
+    } catch (err: any) {
+      toast.error(err?.message ?? "No se pudo abrir el portal");
+    } finally {
+      setOpeningPortal(false);
+    }
+  };
+
+  const periodEnd = subscription?.current_period_end
+    ? new Date(subscription.current_period_end).toLocaleDateString()
+    : null;
+
   return (
-    <SettingsCard title="Plan & Facturación" description="Elige el plan que mejor se ajusta a tu equipo.">
-      <div className="grid gap-4 md:grid-cols-2">
+    <SettingsCard title="Plan & Facturación" description="Suscríbete, cambia o cancela en cualquier momento. Pagos seguros con Paddle.">
+      {subscription && (
+        <div className="mb-5 rounded-xl bg-surface p-4 text-sm flex flex-wrap items-center gap-3 justify-between">
+          <div>
+            <span className="text-muted-foreground">Estado: </span>
+            <span className="font-medium uppercase tracking-wide">{subscription.status}</span>
+            {periodEnd && <span className="text-muted-foreground"> · Renueva {periodEnd}</span>}
+            {subscription.cancel_at_period_end && (
+              <span className="ml-2 text-amber-300">· cambio programado al final del periodo</span>
+            )}
+          </div>
+          {isPaid && subscription.paddle_customer_id && (
+            <Button size="sm" variant="outline" onClick={handlePortal} disabled={openingPortal}>
+              {openingPortal ? <Loader2 className="h-4 w-4 animate-spin" /> : "Gestionar facturación"}
+            </Button>
+          )}
+        </div>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {PLANS.map((p) => {
           const active = p.id === currentPlan;
+          const busy = busyPlan === p.id || (checkoutLoading && busyPlan === p.id);
           return (
-            <div key={p.id} className={`rounded-2xl border p-5 transition-all ${active ? "border-primary bg-primary/5" : "border-border/60 hover:border-border"}`}>
+            <div key={p.id} className={`rounded-2xl border p-5 transition-all flex flex-col ${active ? "border-primary bg-primary/5" : "border-border/60 hover:border-border"}`}>
               <div className="flex items-start justify-between">
                 <div>
                   <div className="font-display text-lg font-semibold flex items-center gap-2">
                     {p.name}
                     {p.popular && <span className="text-[10px] uppercase tracking-wider rounded-full bg-gradient-primary text-primary-foreground px-2 py-0.5">Popular</span>}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{p.desc}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{p.description}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-display text-2xl font-semibold">{p.price}</div>
-                  {p.price !== "Custom" && <div className="text-[11px] text-muted-foreground">/ mes</div>}
+                  <div className="font-display text-2xl font-semibold">${p.priceUSD}</div>
+                  <div className="text-[11px] text-muted-foreground">/ mes</div>
                 </div>
               </div>
-              <ul className="mt-4 space-y-2 text-sm">
+              <ul className="mt-4 space-y-2 text-sm flex-1">
                 {p.features.map((f) => (
                   <li key={f} className="flex items-center gap-2 text-muted-foreground">
                     <Check className="h-3.5 w-3.5 text-primary" /> {f}
@@ -372,23 +487,55 @@ function PlanSettings({ orgId, currentPlan, canManage, onSaved }: { orgId: strin
                 ))}
               </ul>
               <Button
-                onClick={() => choose(p.id)}
-                disabled={!canManage || active || updating === p.id}
+                onClick={() => handleSelect(p.id)}
+                disabled={!canManage || active || busy}
                 variant={active ? "outline" : "default"}
                 className="w-full mt-5"
               >
-                {active ? "Plan activo" : updating === p.id ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Cambiando…</> : "Cambiar a este plan"}
+                {active
+                  ? "Plan activo"
+                  : busy
+                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Procesando…</>
+                    : isPaid
+                      ? (planRank(p.id) > planRank(currentPlan as PlanId) ? "Hacer upgrade" : "Hacer downgrade")
+                      : "Suscribirme"}
               </Button>
             </div>
           );
         })}
       </div>
+
+      {isPaid && canManage && subscription?.paddle_subscription_id && (
+        <div className="mt-6 flex justify-end">
+          <Button variant="ghost" className="text-destructive" onClick={() => setConfirmCancel(true)}>
+            Cancelar suscripción
+          </Button>
+        </div>
+      )}
+
       <div className="mt-6 rounded-xl bg-surface p-4 text-xs text-muted-foreground flex items-start gap-3">
         <Shield className="h-4 w-4 text-primary mt-0.5" />
         <div>
-          La facturación con tarjeta se activa al conectar Stripe desde Lovable Cloud. Mientras tanto, el cambio de plan ajusta los límites de tu organización en tiempo real.
+          Los upgrades se aplican de inmediato (prorrateados). Los downgrades se programan al final del periodo. Las cancelaciones son inmediatas y vuelves a Starter.
         </div>
       </div>
+
+      <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar suscripción</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tu plan {PLAN_BY_ID[currentPlan as PlanId]?.name ?? currentPlan} se cancelará inmediatamente y volverás al plan Starter. Perderás acceso a las funciones premium.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Volver</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancel} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Sí, cancelar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SettingsCard>
   );
 }
