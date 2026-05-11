@@ -115,6 +115,51 @@ export type Database = {
           },
         ]
       }
+      channels: {
+        Row: {
+          access_token: string | null
+          config: Json
+          created_at: string
+          external_id: string | null
+          id: string
+          is_active: boolean
+          last_event_at: string | null
+          name: string
+          organization_id: string
+          provider: Database["public"]["Enums"]["channel_provider"]
+          updated_at: string
+          verify_token: string
+        }
+        Insert: {
+          access_token?: string | null
+          config?: Json
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          is_active?: boolean
+          last_event_at?: string | null
+          name: string
+          organization_id: string
+          provider: Database["public"]["Enums"]["channel_provider"]
+          updated_at?: string
+          verify_token?: string
+        }
+        Update: {
+          access_token?: string | null
+          config?: Json
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          is_active?: boolean
+          last_event_at?: string | null
+          name?: string
+          organization_id?: string
+          provider?: Database["public"]["Enums"]["channel_provider"]
+          updated_at?: string
+          verify_token?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           created_at: string
@@ -638,6 +683,13 @@ export type Database = {
         | "message_received"
         | "tag_added"
         | "manual"
+      channel_provider:
+        | "whatsapp"
+        | "instagram"
+        | "messenger"
+        | "email"
+        | "sms"
+        | "webchat"
       channel_type:
         | "whatsapp"
         | "email"
@@ -783,6 +835,14 @@ export const Constants = {
         "message_received",
         "tag_added",
         "manual",
+      ],
+      channel_provider: [
+        "whatsapp",
+        "instagram",
+        "messenger",
+        "email",
+        "sms",
+        "webchat",
       ],
       channel_type: [
         "whatsapp",
