@@ -42,8 +42,9 @@ export function Pricing({ heading = true }: { heading?: boolean }) {
                 className={`mt-6 w-full ${p.popular ? "bg-gradient-primary text-primary-foreground hover:opacity-90" : ""}`}
                 variant={p.popular ? "default" : "outline"}
               >
-                {/* @ts-expect-error TanStack Router types resolve at build time */}
-                <Link {...target}>{user ? "Elegir plan" : "Empezar"}</Link>
+                {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+                {/* @ts-ignore router type for dynamic href */}
+                <Link to={href}>{user ? "Elegir plan" : "Empezar"}</Link>
               </Button>
               <ul className="mt-6 space-y-3 text-sm">
                 {p.features.map((f) => (
