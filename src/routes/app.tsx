@@ -40,6 +40,7 @@ const nav = [
   { to: "/app/inbox", label: "Inbox", icon: Inbox },
   { to: "/app/channels", label: "Canales", icon: Radio },
   { to: "/app/automations", label: "Automatizaciones", icon: Workflow },
+  { to: "/app/marketing", label: "Marketing", icon: Megaphone },
   { to: "/app/ai", label: "IA", icon: Bot },
   { to: "/app/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/app/team", label: "Equipo", icon: Users },
