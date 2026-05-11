@@ -17,12 +17,19 @@ export function OrgOnboarding({ onCreated }: { onCreated: () => void }) {
     if (!user) return;
     setLoading(true);
     try {
-      await createOrganizationWithDefaults({ name: name.trim(), ownerId: user.id });
+      const org = await createOrganizationWithDefaults({ name: name.trim(), ownerId: user.id });
+      if (typeof window !== "undefined" && org?.id) {
+        localStorage.setItem("auren.currentOrgId", org.id);
+      }
       toast.success("Workspace creado");
       onCreated();
+      // Safety net: hard reload to guarantee fresh auth + org state hydration
+      setTimeout(() => {
+        if (typeof window !== "undefined") window.location.assign("/app");
+      }, 300);
     } catch (err: any) {
-      toast.error(err.message ?? "No se pudo crear el workspace");
-    } finally {
+      console.error("[OrgOnboarding] create failed", err);
+      toast.error(err?.message ?? err?.details ?? "No se pudo crear el workspace");
       setLoading(false);
     }
   };
