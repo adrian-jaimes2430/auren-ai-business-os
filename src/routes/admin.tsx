@@ -1,10 +1,20 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Shield, Users, CreditCard, AlertTriangle, BarChart3 } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Shield, Users, CreditCard, AlertTriangle, BarChart3, LogOut } from "lucide-react";
+import { AuthGuard } from "@/components/auth/AuthGuard";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/admin")({
-  component: AdminPanel,
+  component: AdminPanelWrapper,
   head: () => ({ meta: [{ title: "Admin · A&O Ecosystem" }] }),
 });
+
+function AdminPanelWrapper() {
+  return (
+    <AuthGuard requireSuperAdmin>
+      <AdminPanel />
+    </AuthGuard>
+  );
+}
 
 const stats = [
   { label: "Usuarios totales", value: "12,420", icon: Users },
@@ -14,6 +24,12 @@ const stats = [
 ];
 
 function AdminPanel() {
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const handleSignOut = async () => {
+    await signOut();
+    navigate({ to: "/login" });
+  };
   return (
     <div className="min-h-screen">
       <header className="border-b border-border/60 glass-strong">
@@ -27,7 +43,12 @@ function AdminPanel() {
               <div className="text-xs text-muted-foreground">Panel de gestión global</div>
             </div>
           </div>
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">← Salir</Link>
+          <div className="flex items-center gap-3">
+            <Link to="/app" className="text-sm text-muted-foreground hover:text-foreground">Ir al workspace</Link>
+            <button onClick={handleSignOut} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+              <LogOut className="h-4 w-4" /> Salir
+            </button>
+          </div>
         </div>
       </header>
 

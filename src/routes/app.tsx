@@ -1,12 +1,22 @@
-import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Kanban, Inbox, Workflow, Users, BarChart3, Bot, Settings, Sparkles,
+  LayoutDashboard, Kanban, Inbox, Workflow, Users, BarChart3, Bot, Settings, Sparkles, LogOut,
 } from "lucide-react";
+import { AuthGuard } from "@/components/auth/AuthGuard";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/app")({
-  component: AppLayout,
+  component: AppLayoutWrapper,
   head: () => ({ meta: [{ title: "AUREN AI — Workspace" }] }),
 });
+
+function AppLayoutWrapper() {
+  return (
+    <AuthGuard>
+      <AppLayout />
+    </AuthGuard>
+  );
+}
 
 const nav = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -21,6 +31,12 @@ const nav = [
 
 function AppLayout() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const handleSignOut = async () => {
+    await signOut();
+    navigate({ to: "/login" });
+  };
   return (
     <div className="min-h-screen flex">
       <aside className="w-64 shrink-0 border-r border-border/60 glass-strong flex flex-col">
@@ -47,14 +63,20 @@ function AppLayout() {
             );
           })}
         </nav>
-        <div className="p-3 border-t border-border/60">
+        <div className="p-3 border-t border-border/60 space-y-2">
           <div className="rounded-xl glass p-3 text-xs">
-            <div className="font-medium">Plan Pro</div>
+            <div className="font-medium truncate">{user?.email ?? "Plan Pro"}</div>
             <div className="text-muted-foreground mt-0.5">7,820 / 10,000 contactos</div>
             <div className="mt-2 h-1.5 rounded-full bg-surface overflow-hidden">
               <div className="h-full bg-gradient-primary" style={{ width: "78%" }} />
             </div>
           </div>
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-surface transition-colors"
+          >
+            <LogOut className="h-4 w-4" /> Cerrar sesión
+          </button>
         </div>
       </aside>
       <main className="flex-1 overflow-auto">
