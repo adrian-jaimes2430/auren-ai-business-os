@@ -164,6 +164,7 @@ export type Database = {
         Row: {
           created_at: string
           email: string | null
+          external_id: string | null
           full_name: string
           id: string
           notes: string | null
@@ -177,6 +178,7 @@ export type Database = {
         Insert: {
           created_at?: string
           email?: string | null
+          external_id?: string | null
           full_name: string
           id?: string
           notes?: string | null
@@ -190,6 +192,7 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string | null
+          external_id?: string | null
           full_name?: string
           id?: string
           notes?: string | null
@@ -212,8 +215,10 @@ export type Database = {
       }
       conversations: {
         Row: {
+          ai_autoreply: boolean
           assigned_to: string | null
           channel: Database["public"]["Enums"]["channel_type"]
+          channel_id: string | null
           contact_id: string | null
           created_at: string
           id: string
@@ -225,8 +230,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_autoreply?: boolean
           assigned_to?: string | null
           channel: Database["public"]["Enums"]["channel_type"]
+          channel_id?: string | null
           contact_id?: string | null
           created_at?: string
           id?: string
@@ -238,8 +245,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_autoreply?: boolean
           assigned_to?: string | null
           channel?: Database["public"]["Enums"]["channel_type"]
+          channel_id?: string | null
           contact_id?: string | null
           created_at?: string
           id?: string
@@ -251,6 +260,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "conversations_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversations_contact_id_fkey"
             columns: ["contact_id"]
