@@ -24,9 +24,11 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppInboxRouteImport } from './routes/app.inbox'
 import { Route as AppCrmRouteImport } from './routes/app.crm'
 import { Route as AppContactsRouteImport } from './routes/app.contacts'
+import { Route as AppChannelsRouteImport } from './routes/app.channels'
 import { Route as AppAutomationsRouteImport } from './routes/app.automations'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppAiRouteImport } from './routes/app.ai'
+import { Route as ApiPublicWebhooksWhatsappOrgIdChannelIdRouteImport } from './routes/api/public/webhooks/whatsapp/$orgId/$channelId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -103,6 +105,11 @@ const AppContactsRoute = AppContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => AppRoute,
 } as any)
+const AppChannelsRoute = AppChannelsRouteImport.update({
+  id: '/channels',
+  path: '/channels',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAutomationsRoute = AppAutomationsRouteImport.update({
   id: '/automations',
   path: '/automations',
@@ -118,6 +125,12 @@ const AppAiRoute = AppAiRouteImport.update({
   path: '/ai',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicWebhooksWhatsappOrgIdChannelIdRoute =
+  ApiPublicWebhooksWhatsappOrgIdChannelIdRouteImport.update({
+    id: '/api/public/webhooks/whatsapp/$orgId/$channelId',
+    path: '/api/public/webhooks/whatsapp/$orgId/$channelId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -131,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/app/ai': typeof AppAiRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/automations': typeof AppAutomationsRoute
+  '/app/channels': typeof AppChannelsRoute
   '/app/contacts': typeof AppContactsRoute
   '/app/crm': typeof AppCrmRoute
   '/app/inbox': typeof AppInboxRoute
@@ -138,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/webhooks/whatsapp/$orgId/$channelId': typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,6 +165,7 @@ export interface FileRoutesByTo {
   '/app/ai': typeof AppAiRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/automations': typeof AppAutomationsRoute
+  '/app/channels': typeof AppChannelsRoute
   '/app/contacts': typeof AppContactsRoute
   '/app/crm': typeof AppCrmRoute
   '/app/inbox': typeof AppInboxRoute
@@ -157,6 +173,7 @@ export interface FileRoutesByTo {
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app': typeof AppIndexRoute
+  '/api/public/webhooks/whatsapp/$orgId/$channelId': typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -171,6 +188,7 @@ export interface FileRoutesById {
   '/app/ai': typeof AppAiRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/automations': typeof AppAutomationsRoute
+  '/app/channels': typeof AppChannelsRoute
   '/app/contacts': typeof AppContactsRoute
   '/app/crm': typeof AppCrmRoute
   '/app/inbox': typeof AppInboxRoute
@@ -178,6 +196,7 @@ export interface FileRoutesById {
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/webhooks/whatsapp/$orgId/$channelId': typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -193,6 +212,7 @@ export interface FileRouteTypes {
     | '/app/ai'
     | '/app/analytics'
     | '/app/automations'
+    | '/app/channels'
     | '/app/contacts'
     | '/app/crm'
     | '/app/inbox'
@@ -200,6 +220,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/invite/$token'
     | '/app/'
+    | '/api/public/webhooks/whatsapp/$orgId/$channelId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -212,6 +233,7 @@ export interface FileRouteTypes {
     | '/app/ai'
     | '/app/analytics'
     | '/app/automations'
+    | '/app/channels'
     | '/app/contacts'
     | '/app/crm'
     | '/app/inbox'
@@ -219,6 +241,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/invite/$token'
     | '/app'
+    | '/api/public/webhooks/whatsapp/$orgId/$channelId'
   id:
     | '__root__'
     | '/'
@@ -232,6 +255,7 @@ export interface FileRouteTypes {
     | '/app/ai'
     | '/app/analytics'
     | '/app/automations'
+    | '/app/channels'
     | '/app/contacts'
     | '/app/crm'
     | '/app/inbox'
@@ -239,6 +263,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/invite/$token'
     | '/app/'
+    | '/api/public/webhooks/whatsapp/$orgId/$channelId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -251,6 +276,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  ApiPublicWebhooksWhatsappOrgIdChannelIdRoute: typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -360,6 +386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContactsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/channels': {
+      id: '/app/channels'
+      path: '/channels'
+      fullPath: '/app/channels'
+      preLoaderRoute: typeof AppChannelsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/automations': {
       id: '/app/automations'
       path: '/automations'
@@ -381,6 +414,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/webhooks/whatsapp/$orgId/$channelId': {
+      id: '/api/public/webhooks/whatsapp/$orgId/$channelId'
+      path: '/api/public/webhooks/whatsapp/$orgId/$channelId'
+      fullPath: '/api/public/webhooks/whatsapp/$orgId/$channelId'
+      preLoaderRoute: typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -388,6 +428,7 @@ interface AppRouteChildren {
   AppAiRoute: typeof AppAiRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppAutomationsRoute: typeof AppAutomationsRoute
+  AppChannelsRoute: typeof AppChannelsRoute
   AppContactsRoute: typeof AppContactsRoute
   AppCrmRoute: typeof AppCrmRoute
   AppInboxRoute: typeof AppInboxRoute
@@ -400,6 +441,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAiRoute: AppAiRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppAutomationsRoute: AppAutomationsRoute,
+  AppChannelsRoute: AppChannelsRoute,
   AppContactsRoute: AppContactsRoute,
   AppCrmRoute: AppCrmRoute,
   AppInboxRoute: AppInboxRoute,
@@ -420,6 +462,8 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   InviteTokenRoute: InviteTokenRoute,
+  ApiPublicWebhooksWhatsappOrgIdChannelIdRoute:
+    ApiPublicWebhooksWhatsappOrgIdChannelIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
