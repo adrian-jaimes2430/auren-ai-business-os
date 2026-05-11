@@ -1,0 +1,1 @@
+drop policy if exists "Branding files are public" on storage.objects;
