@@ -878,6 +878,59 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string
+          id: string
+          mrr_cents: number
+          notes: string | null
+          organization_id: string
+          plan: Database["public"]["Enums"]["plan_type"]
+          status: Database["public"]["Enums"]["subscription_status"]
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string
+          id?: string
+          mrr_cents?: number
+          notes?: string | null
+          organization_id: string
+          plan?: Database["public"]["Enums"]["plan_type"]
+          status?: Database["public"]["Enums"]["subscription_status"]
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string
+          id?: string
+          mrr_cents?: number
+          notes?: string | null
+          organization_id?: string
+          plan?: Database["public"]["Enums"]["plan_type"]
+          status?: Database["public"]["Enums"]["subscription_status"]
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -951,6 +1004,14 @@ export type Database = {
         | "telegram"
       conversation_status: "open" | "pending" | "resolved" | "snoozed"
       org_role: "owner" | "admin" | "supervisor" | "agent"
+      plan_type: "starter" | "pro" | "business" | "enterprise"
+      subscription_status:
+        | "trial"
+        | "pending"
+        | "active"
+        | "past_due"
+        | "suspended"
+        | "canceled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1106,6 +1167,15 @@ export const Constants = {
       ],
       conversation_status: ["open", "pending", "resolved", "snoozed"],
       org_role: ["owner", "admin", "supervisor", "agent"],
+      plan_type: ["starter", "pro", "business", "enterprise"],
+      subscription_status: [
+        "trial",
+        "pending",
+        "active",
+        "past_due",
+        "suspended",
+        "canceled",
+      ],
     },
   },
 } as const
