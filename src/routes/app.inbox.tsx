@@ -4,7 +4,7 @@ import { Bot, Loader2, Plus, Send, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/use-organization";
-import { useAuth } from "@/hooks/use-auth";
+
 import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import {
