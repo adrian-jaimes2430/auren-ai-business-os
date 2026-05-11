@@ -4,6 +4,8 @@ import {
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useAuth } from "@/hooks/use-auth";
+import { useOrganization } from "@/hooks/use-organization";
+import { OrgOnboarding } from "@/components/app/OrgOnboarding";
 
 export const Route = createFileRoute("/app")({
   component: AppLayoutWrapper,
@@ -13,9 +15,22 @@ export const Route = createFileRoute("/app")({
 function AppLayoutWrapper() {
   return (
     <AuthGuard>
-      <AppLayout />
+      <AppGate />
     </AuthGuard>
   );
+}
+
+function AppGate() {
+  const { loading, currentOrg, refresh } = useOrganization();
+  if (loading) {
+    return (
+      <div className="min-h-screen grid place-items-center">
+        <div className="text-sm text-muted-foreground">Cargando workspace…</div>
+      </div>
+    );
+  }
+  if (!currentOrg) return <OrgOnboarding onCreated={refresh} />;
+  return <AppLayout />;
 }
 
 const nav = [
@@ -33,6 +48,7 @@ function AppLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { currentOrg, currentRole } = useOrganization();
   const handleSignOut = async () => {
     await signOut();
     navigate({ to: "/login" });
@@ -65,10 +81,9 @@ function AppLayout() {
         </nav>
         <div className="p-3 border-t border-border/60 space-y-2">
           <div className="rounded-xl glass p-3 text-xs">
-            <div className="font-medium truncate">{user?.email ?? "Plan Pro"}</div>
-            <div className="text-muted-foreground mt-0.5">7,820 / 10,000 contactos</div>
-            <div className="mt-2 h-1.5 rounded-full bg-surface overflow-hidden">
-              <div className="h-full bg-gradient-primary" style={{ width: "78%" }} />
+            <div className="font-medium truncate">{currentOrg?.name ?? user?.email}</div>
+            <div className="text-muted-foreground mt-0.5 capitalize">
+              {currentRole ?? "miembro"} · plan {currentOrg?.plan ?? "starter"}
             </div>
           </div>
           <button
