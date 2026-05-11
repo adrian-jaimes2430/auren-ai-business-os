@@ -24,6 +24,7 @@ import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppInboxRouteImport } from './routes/app.inbox'
 import { Route as AppCrmRouteImport } from './routes/app.crm'
 import { Route as AppContactsRouteImport } from './routes/app.contacts'
+import { Route as AppChannelsRouteImport } from './routes/app.channels'
 import { Route as AppAutomationsRouteImport } from './routes/app.automations'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppAiRouteImport } from './routes/app.ai'
@@ -104,6 +105,11 @@ const AppContactsRoute = AppContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => AppRoute,
 } as any)
+const AppChannelsRoute = AppChannelsRouteImport.update({
+  id: '/channels',
+  path: '/channels',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAutomationsRoute = AppAutomationsRouteImport.update({
   id: '/automations',
   path: '/automations',
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/app/ai': typeof AppAiRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/automations': typeof AppAutomationsRoute
+  '/app/channels': typeof AppChannelsRoute
   '/app/contacts': typeof AppContactsRoute
   '/app/crm': typeof AppCrmRoute
   '/app/inbox': typeof AppInboxRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/app/ai': typeof AppAiRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/automations': typeof AppAutomationsRoute
+  '/app/channels': typeof AppChannelsRoute
   '/app/contacts': typeof AppContactsRoute
   '/app/crm': typeof AppCrmRoute
   '/app/inbox': typeof AppInboxRoute
@@ -180,6 +188,7 @@ export interface FileRoutesById {
   '/app/ai': typeof AppAiRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/automations': typeof AppAutomationsRoute
+  '/app/channels': typeof AppChannelsRoute
   '/app/contacts': typeof AppContactsRoute
   '/app/crm': typeof AppCrmRoute
   '/app/inbox': typeof AppInboxRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/app/ai'
     | '/app/analytics'
     | '/app/automations'
+    | '/app/channels'
     | '/app/contacts'
     | '/app/crm'
     | '/app/inbox'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/app/ai'
     | '/app/analytics'
     | '/app/automations'
+    | '/app/channels'
     | '/app/contacts'
     | '/app/crm'
     | '/app/inbox'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/app/ai'
     | '/app/analytics'
     | '/app/automations'
+    | '/app/channels'
     | '/app/contacts'
     | '/app/crm'
     | '/app/inbox'
@@ -374,6 +386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContactsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/channels': {
+      id: '/app/channels'
+      path: '/channels'
+      fullPath: '/app/channels'
+      preLoaderRoute: typeof AppChannelsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/automations': {
       id: '/app/automations'
       path: '/automations'
@@ -409,6 +428,7 @@ interface AppRouteChildren {
   AppAiRoute: typeof AppAiRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppAutomationsRoute: typeof AppAutomationsRoute
+  AppChannelsRoute: typeof AppChannelsRoute
   AppContactsRoute: typeof AppContactsRoute
   AppCrmRoute: typeof AppCrmRoute
   AppInboxRoute: typeof AppInboxRoute
@@ -421,6 +441,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAiRoute: AppAiRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppAutomationsRoute: AppAutomationsRoute,
+  AppChannelsRoute: AppChannelsRoute,
   AppContactsRoute: AppContactsRoute,
   AppCrmRoute: AppCrmRoute,
   AppInboxRoute: AppInboxRoute,
