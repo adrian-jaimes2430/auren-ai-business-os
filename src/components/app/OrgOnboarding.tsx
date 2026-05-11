@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AurenLogo } from "@/components/brand/AurenLogo";
 import { useAuth } from "@/hooks/use-auth";
 import { createOrganizationWithDefaults } from "@/hooks/use-organization";
 import { toast } from "sonner";
@@ -37,12 +38,7 @@ export function OrgOnboarding({ onCreated }: { onCreated: () => void }) {
   return (
     <div className="min-h-screen grid place-items-center px-6 py-12">
       <div className="w-full max-w-md">
-        <div className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary glow-primary">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="font-display font-semibold">AUREN <span className="text-gradient-primary">AI</span></span>
-        </div>
+        <AurenLogo className="w-36" />
         <h1 className="mt-6 font-display text-3xl font-semibold">Crea tu workspace</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Dale un nombre a tu organización. Crearemos tu pipeline inicial automáticamente.
