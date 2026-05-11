@@ -62,7 +62,7 @@ function AppLayout() {
     <div className="min-h-screen flex">
       <aside className="w-64 shrink-0 border-r border-border/60 glass-strong flex flex-col">
         <Link to="/" className="flex items-center gap-2 px-5 py-5 border-b border-border/60">
-          <AurenLogo className="w-34" />
+          <AurenLogo className="w-36" />
         </Link>
         <nav className="p-3 space-y-1 flex-1">
           {nav.map((n) => {
