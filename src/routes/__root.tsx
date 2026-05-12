@@ -77,10 +77,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "CRM, IA, automatización y omnicanal en una sola plataforma. Construido por Company A&O Ecosystem." },
       { name: "author", content: "Company A&O Ecosystem" },
       { property: "og:title", content: "AUREN AI — Sistema operativo comercial inteligente" },
-      { property: "og:description", content: "CRM + IA + Automatización + Omnicanal para empresas modernas." },
+      { property: "og:description", content: "CRM, IA, automatización y omnicanal en una sola plataforma. Construido por Company A&O Ecosystem." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "AUREN AI — Sistema operativo comercial inteligente" },
+      { name: "twitter:description", content: "CRM, IA, automatización y omnicanal en una sola plataforma. Construido por Company A&O Ecosystem." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/0a3e06c0-e22a-40e9-9153-95a4e951aac6" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/0a3e06c0-e22a-40e9-9153-95a4e951aac6" },
     ],
     links: [
       {
