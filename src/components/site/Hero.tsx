@@ -75,16 +75,31 @@ export function Hero() {
         </motion.div>
 
         <motion.div
+          ref={orbRef}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.2 }}
+          style={{ y }}
           className="relative mt-20 mx-auto max-w-5xl"
         >
-          <div className="absolute -inset-10 bg-gradient-mesh opacity-20 blur-3xl rounded-full" />
-          <div className="relative rounded-2xl glass-strong p-2 shadow-elevated">
+          <motion.div
+            style={{ opacity: glowOpacity, rotate }}
+            className="absolute -inset-10 bg-gradient-mesh blur-3xl rounded-full"
+          />
+          <div className="relative rounded-2xl glass-strong p-2 shadow-elevated" style={{ perspective: 1200 }}>
             <div className="rounded-xl overflow-hidden border border-border/60 aspect-[16/9] bg-surface relative">
-              <img src={heroOrb} alt="AUREN AI" className="absolute inset-0 h-full w-full object-cover opacity-80" width={1536} height={1536} />
+              <motion.img
+                src={heroOrb}
+                alt="AUREN AI"
+                width={1536}
+                height={1536}
+                style={{ scale, rotate, rotateX: tiltX, rotateY: tiltY }}
+                animate={{ filter: ["brightness(0.9)", "brightness(1.05)", "brightness(0.9)"] }}
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-0 h-full w-full object-cover opacity-80 will-change-transform"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+
               <div className="absolute bottom-6 left-6 right-6 grid grid-cols-3 gap-3">
                 {[
                   { k: "Conversión", v: "+38%" },
