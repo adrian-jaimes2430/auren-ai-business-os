@@ -1,10 +1,45 @@
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring, useMotionValue } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import heroOrb from "@/assets/hero-orb.jpg";
 
 export function Hero() {
+  const orbRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: orbRef,
+    offset: ["start end", "end start"],
+  });
+
+  // Scroll-driven transforms
+  const rotate = useTransform(scrollYProgress, [0, 1], [-15, 25]);
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.85, 1.05, 0.9]);
+  const y = useTransform(scrollYProgress, [0, 1], [60, -80]);
+  const glowOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.2, 0.6, 0.3]);
+
+  // Mouse parallax
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 80, damping: 20 });
+  const springY = useSpring(mouseY, { stiffness: 80, damping: 20 });
+  const tiltX = useTransform(springY, [-0.5, 0.5], [10, -10]);
+  const tiltY = useTransform(springX, [-0.5, 0.5], [-10, 10]);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      const el = orbRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const yy = (e.clientY - rect.top) / rect.height - 0.5;
+      mouseX.set(x);
+      mouseY.set(yy);
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, [mouseX, mouseY]);
+
   return (
     <section className="relative overflow-hidden pt-40 pb-24 grid-bg">
       <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
