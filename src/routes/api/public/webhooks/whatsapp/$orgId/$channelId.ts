@@ -161,7 +161,7 @@ export const Route = createFileRoute("/api/public/webhooks/whatsapp/$orgId/$chan
 async function runAiAutoReply(opts: {
   orgId: string;
   conversationId: string;
-  channel: { id: string; access_token: string | null; config: any };
+  channel: { id: string; access_token: string | null; config: any; external_id: string | null };
   to: string;
   latestText: string;
 }) {
