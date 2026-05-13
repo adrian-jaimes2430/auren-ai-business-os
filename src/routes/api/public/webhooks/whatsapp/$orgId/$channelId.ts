@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/public/webhooks/whatsapp/$orgId/$chan
 
         const { data: channel } = await supabaseAdmin
           .from("channels")
-          .select("id, organization_id, provider, is_active, access_token, config")
+          .select("id, organization_id, provider, is_active, access_token, config, external_id")
           .eq("id", params.channelId)
           .eq("organization_id", params.orgId)
           .maybeSingle();
