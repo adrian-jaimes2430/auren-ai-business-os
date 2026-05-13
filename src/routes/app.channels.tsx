@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Plus, Radio, MessageCircle, Instagram, Mail, Phone, MessageSquare, Globe, Copy, Check,
-  Trash2, Power, PowerOff, Loader2, Sparkles, Send,
+  Trash2, Power, PowerOff, Loader2, Sparkles, Send, Settings,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/use-organization";
@@ -47,6 +47,7 @@ function ChannelsPage() {
   const [addOpen, setAddOpen] = useState<Provider | null>(null);
   const [removeTarget, setRemoveTarget] = useState<Channel | null>(null);
   const [testTarget, setTestTarget] = useState<Channel | null>(null);
+  const [editTarget, setEditTarget] = useState<Channel | null>(null);
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -145,6 +146,7 @@ function ChannelsPage() {
                 onToggle={() => toggleActive(c)}
                 onRemove={() => setRemoveTarget(c)}
                 onTest={() => setTestTarget(c)}
+                onEdit={() => setEditTarget(c)}
               />
             ))}
           </div>
@@ -176,6 +178,17 @@ function ChannelsPage() {
         )}
       </Dialog>
 
+      {/* Edit credentials dialog */}
+      <Dialog open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)}>
+        {editTarget && (
+          <EditChannelDialog
+            channel={editTarget}
+            onSaved={() => { setEditTarget(null); load(); }}
+            onClose={() => setEditTarget(null)}
+          />
+        )}
+      </Dialog>
+
       <AlertDialog open={!!removeTarget} onOpenChange={(o) => !o && setRemoveTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -194,9 +207,9 @@ function ChannelsPage() {
   );
 }
 
-function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, onTest }: {
+function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, onTest, onEdit }: {
   channel: Channel; baseUrl: string; orgId: string; canManage: boolean;
-  onToggle: () => void; onRemove: () => void; onTest: () => void;
+  onToggle: () => void; onRemove: () => void; onTest: () => void; onEdit: () => void;
 }) {
   const meta = providerMeta(channel.provider);
   const [copied, setCopied] = useState<string | null>(null);
@@ -238,6 +251,7 @@ function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, o
         </div>
         {canManage && (
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={onEdit} title="Editar credenciales"><Settings className="h-4 w-4" /></Button>
             <Button variant="ghost" size="icon" onClick={onTest} title="Probar"><Send className="h-4 w-4" /></Button>
             <Button variant="ghost" size="icon" onClick={onToggle} title={channel.is_active ? "Pausar" : "Activar"}>
               {channel.is_active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4 text-primary" />}
@@ -290,6 +304,7 @@ function AddChannelDialog({ provider, orgId, baseUrl, onCreated, onClose }: {
       name,
       external_id: externalId || null,
       access_token: accessToken || null,
+      config: provider === "whatsapp" && externalId ? { phone_number_id: externalId } : {},
     }).select().single();
     setSubmitting(false);
     if (error) return toast.error(error.message);
@@ -434,6 +449,73 @@ function TestWebhookDialog({ channel, orgId, baseUrl, onClose }: {
           {sending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando…</> : <><Send className="h-4 w-4 mr-2" /> Enviar prueba</>}
         </Button>
       </DialogFooter>
+    </DialogContent>
+  );
+}
+
+function EditChannelDialog({ channel, onSaved, onClose }: {
+  channel: Channel; onSaved: () => void; onClose: () => void;
+}) {
+  const meta = providerMeta(channel.provider);
+  const [name, setName] = useState(channel.name);
+  const cfg = (channel.config as any) || {};
+  const [phoneNumberId, setPhoneNumberId] = useState<string>(cfg.phone_number_id || channel.external_id || "");
+  const [accessToken, setAccessToken] = useState<string>(channel.access_token || "");
+  const [saving, setSaving] = useState(false);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    const newConfig = channel.provider === "whatsapp"
+      ? { ...cfg, phone_number_id: phoneNumberId || null }
+      : cfg;
+    const { error } = await supabase.from("channels").update({
+      name,
+      external_id: phoneNumberId || null,
+      access_token: accessToken || null,
+      config: newConfig,
+    }).eq("id", channel.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Credenciales actualizadas");
+    onSaved();
+  };
+
+  return (
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Settings className="h-4 w-4 text-primary" /> Editar {meta.name}
+        </DialogTitle>
+        <DialogDescription>
+          Actualiza el Phone Number ID y el Access Token. Sin estos datos los mensajes salientes no se entregan.
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={save} className="space-y-4">
+        <div>
+          <Label>Nombre interno</Label>
+          <Input className="mt-1.5" value={name} onChange={(e) => setName(e.target.value)} required />
+        </div>
+        {channel.provider === "whatsapp" && (
+          <>
+            <div>
+              <Label>Phone Number ID</Label>
+              <Input className="mt-1.5 font-mono" value={phoneNumberId} onChange={(e) => setPhoneNumberId(e.target.value)} placeholder="1234567890" />
+              <p className="text-[11px] text-muted-foreground mt-1.5">Lo encuentras en Meta → WhatsApp → API Setup.</p>
+            </div>
+            <div>
+              <Label>Access Token (permanente)</Label>
+              <Input className="mt-1.5 font-mono" type="password" value={accessToken} onChange={(e) => setAccessToken(e.target.value)} placeholder="EAAG..." />
+            </div>
+          </>
+        )}
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Guardando…</> : "Guardar"}
+          </Button>
+        </DialogFooter>
+      </form>
     </DialogContent>
   );
 }

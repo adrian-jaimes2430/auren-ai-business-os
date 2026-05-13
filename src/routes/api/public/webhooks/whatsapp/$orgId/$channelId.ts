@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/public/webhooks/whatsapp/$orgId/$chan
 
         const { data: channel } = await supabaseAdmin
           .from("channels")
-          .select("id, organization_id, provider, is_active, access_token, config")
+          .select("id, organization_id, provider, is_active, access_token, config, external_id")
           .eq("id", params.channelId)
           .eq("organization_id", params.orgId)
           .maybeSingle();
@@ -161,7 +161,7 @@ export const Route = createFileRoute("/api/public/webhooks/whatsapp/$orgId/$chan
 async function runAiAutoReply(opts: {
   orgId: string;
   conversationId: string;
-  channel: { id: string; access_token: string | null; config: any };
+  channel: { id: string; access_token: string | null; config: any; external_id: string | null };
   to: string;
   latestText: string;
 }) {
@@ -243,7 +243,7 @@ async function runAiAutoReply(opts: {
     const reply: string = aiJson?.choices?.[0]?.message?.content?.trim();
     if (!reply) return;
 
-    const phoneNumberId = opts.channel.config?.phone_number_id;
+    const phoneNumberId = opts.channel.config?.phone_number_id || opts.channel.external_id;
     let delivery: any = null;
     let deliveryError: string | null = null;
     if (opts.channel.access_token && phoneNumberId) {
