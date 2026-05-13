@@ -725,6 +725,7 @@ export type Database = {
           brand_color: string | null
           created_at: string
           id: string
+          is_support_org: boolean
           locale: string | null
           logo_url: string | null
           name: string
@@ -739,6 +740,7 @@ export type Database = {
           brand_color?: string | null
           created_at?: string
           id?: string
+          is_support_org?: boolean
           locale?: string | null
           logo_url?: string | null
           name: string
@@ -753,6 +755,7 @@ export type Database = {
           brand_color?: string | null
           created_at?: string
           id?: string
+          is_support_org?: boolean
           locale?: string | null
           logo_url?: string | null
           name?: string
@@ -946,6 +949,86 @@ export type Database = {
           },
         ]
       }
+      support_ticket_messages: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          ticket_id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          ticket_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          organization_id: string
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          organization_id: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          organization_id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -979,6 +1062,7 @@ export type Database = {
           brand_color: string | null
           created_at: string
           id: string
+          is_support_org: boolean
           locale: string | null
           logo_url: string | null
           name: string
@@ -1015,6 +1099,7 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      is_support_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "supervisor" | "agent" | "user"
@@ -1050,6 +1135,13 @@ export type Database = {
         | "past_due"
         | "suspended"
         | "canceled"
+      ticket_priority: "low" | "normal" | "high" | "urgent"
+      ticket_status:
+        | "open"
+        | "in_progress"
+        | "waiting_user"
+        | "resolved"
+        | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1213,6 +1305,14 @@ export const Constants = {
         "past_due",
         "suspended",
         "canceled",
+      ],
+      ticket_priority: ["low", "normal", "high", "urgent"],
+      ticket_status: [
+        "open",
+        "in_progress",
+        "waiting_user",
+        "resolved",
+        "closed",
       ],
     },
   },
