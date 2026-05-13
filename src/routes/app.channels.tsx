@@ -240,6 +240,7 @@ function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, o
         </div>
         {canManage && (
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={onEdit} title="Editar credenciales"><Settings className="h-4 w-4" /></Button>
             <Button variant="ghost" size="icon" onClick={onTest} title="Probar"><Send className="h-4 w-4" /></Button>
             <Button variant="ghost" size="icon" onClick={onToggle} title={channel.is_active ? "Pausar" : "Activar"}>
               {channel.is_active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4 text-primary" />}
