@@ -14,6 +14,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useTickets, STATUS_LABEL, STATUS_TONE, PRIORITY_LABEL, PRIORITY_TONE, type Ticket } from "@/hooks/use-tickets";
+import { TicketDetailDialog } from "@/routes/app.support";
+import { LifeBuoy, Inbox } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPanelWrapper,
