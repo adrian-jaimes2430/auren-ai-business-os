@@ -93,14 +93,11 @@ Deno.serve(async (req: Request) => {
     if (conv.channel === "whatsapp" && conv.channel_id) {
       const { data: channel } = await admin
         .from("channels")
-        .select("access_token, config, is_active")
+        .select("access_token, config, is_active, external_id")
         .eq("id", conv.channel_id)
         .maybeSingle();
-      const phoneNumberId = (channel?.config as any)?.phone_number_id;
-      // Fallback: some channels were created storing the phone number id in external_id
-      const { data: chMeta } = phoneNumberId ? { data: null } : await admin
-        .from("channels").select("external_id").eq("id", conv.channel_id).maybeSingle();
-      const effectivePhoneNumberId = phoneNumberId || (chMeta as any)?.external_id;
+      const phoneNumberId =
+        (channel?.config as any)?.phone_number_id || channel?.external_id;
       if (channel?.is_active && channel.access_token && phoneNumberId && conv.contact_id) {
         const { data: contact } = await admin
           .from("contacts")
@@ -123,6 +120,8 @@ Deno.serve(async (req: Request) => {
         } else {
           deliveryError = "Contacto sin teléfono";
         }
+      } else if (!channel?.access_token || !phoneNumberId) {
+        deliveryError = "Canal sin credenciales (falta access_token o phone_number_id)";
       }
     }
 
