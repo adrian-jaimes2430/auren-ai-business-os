@@ -9,12 +9,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/register")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
   component: RegisterPage,
   head: () => ({ meta: [{ title: "Crear cuenta — AUREN AI" }] }),
 });
 
+function getSafeRedirect(redirect: string | undefined) {
+  if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//")) return null;
+  return redirect;
+}
+
 function RegisterPage() {
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +37,7 @@ function RegisterPage() {
     }
     setLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/app`;
+      const redirectUrl = `${window.location.origin}${getSafeRedirect(redirect) ?? "/app"}`;
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -39,7 +48,7 @@ function RegisterPage() {
       });
       if (error) throw error;
       toast.success("Cuenta creada. Revisa tu email para confirmar.");
-      navigate({ to: "/login" });
+      navigate({ to: "/login", search: redirect ? { redirect } : undefined });
     } catch (err: any) {
       toast.error(err.message ?? "No se pudo crear la cuenta");
     } finally {
@@ -72,7 +81,7 @@ function RegisterPage() {
             </Button>
           </form>
           <p className="mt-6 text-sm text-muted-foreground text-center">
-            ¿Ya tienes cuenta? <Link to="/login" className="text-foreground hover:text-primary">Entra</Link>
+            ¿Ya tienes cuenta? <Link to="/login" search={redirect ? { redirect } : undefined} className="text-foreground hover:text-primary">Entra</Link>
           </p>
         </div>
       </div>
