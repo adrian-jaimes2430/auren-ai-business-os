@@ -178,6 +178,17 @@ function ChannelsPage() {
         )}
       </Dialog>
 
+      {/* Edit credentials dialog */}
+      <Dialog open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)}>
+        {editTarget && (
+          <EditChannelDialog
+            channel={editTarget}
+            onSaved={() => { setEditTarget(null); load(); }}
+            onClose={() => setEditTarget(null)}
+          />
+        )}
+      </Dialog>
+
       <AlertDialog open={!!removeTarget} onOpenChange={(o) => !o && setRemoveTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
