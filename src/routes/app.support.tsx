@@ -31,7 +31,32 @@ function SupportPage() {
   const { user } = useAuth();
   const { currentOrg } = useOrganization();
   const orgId = currentOrg?.id ?? null;
-  const { tickets, loading, refresh } = useTickets({ orgId, mode: "org" });
+  const [isStaff, setIsStaff] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await (supabase as any).rpc("is_support_staff", { _user_id: user.id });
+      setIsStaff(Boolean(data));
+    })();
+  }, [user?.id]);
+  const { tickets, loading, refresh } = useTickets({ orgId, mode: isStaff ? "all" : "org" });
+  const [openNew, setOpenNew] = useState(false);
+  const [active, setActive] = useState<Ticket | null>(null);
+  const [supportMembers, setSupportMembers] = useState<{ id: string; label: string }[]>([]);
+
+  useEffect(() => {
+    if (!isStaff) return;
+    (async () => {
+      const { data: orgs } = await supabase.from("organizations").select("id").eq("is_support_org", true);
+      const orgIds = (orgs ?? []).map((o: any) => o.id);
+      if (!orgIds.length) return;
+      const { data: members } = await supabase.from("organization_members").select("user_id").in("organization_id", orgIds);
+      const ids = Array.from(new Set((members ?? []).map((m: any) => m.user_id)));
+      if (!ids.length) return;
+      const { data: profiles } = await supabase.from("profiles").select("id,email,full_name").in("id", ids);
+      setSupportMembers((profiles ?? []).map((p: any) => ({ id: p.id, label: p.full_name || p.email || p.id })));
+    })();
+  }, [isStaff]);
   const [openNew, setOpenNew] = useState(false);
   const [active, setActive] = useState<Ticket | null>(null);
 
