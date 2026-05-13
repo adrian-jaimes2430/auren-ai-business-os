@@ -1080,6 +1080,18 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_invitation_by_token: {
+        Args: { _token: string }
+        Returns: {
+          email: string
+          expires_at: string
+          id: string
+          organization_id: string
+          organization_name: string
+          role: Database["public"]["Enums"]["org_role"]
+          status: string
+        }[]
+      }
       has_org_role: {
         Args: {
           _org_id: string
