@@ -23,6 +23,7 @@ type Inv = {
 function InvitePage() {
   const { token } = Route.useParams();
   const navigate = useNavigate();
+  const inviteRedirect = `/invite/${token}`;
   const { user, loading: authLoading } = useAuth();
   const [inv, setInv] = useState<Inv | null>(null);
   const [orgName, setOrgName] = useState<string>("");
@@ -101,8 +102,8 @@ function InvitePage() {
               <div className="mt-6 space-y-3">
                 <p className="text-sm">Inicia sesión o crea una cuenta con <span className="font-medium">{inv.email}</span> para aceptar.</p>
                 <div className="flex gap-2">
-                  <Link to="/login" className="flex-1"><Button className="w-full">Iniciar sesión</Button></Link>
-                  <Link to="/register" className="flex-1"><Button variant="outline" className="w-full">Crear cuenta</Button></Link>
+                  <Link to="/login" search={{ redirect: inviteRedirect }} className="flex-1"><Button className="w-full">Iniciar sesión</Button></Link>
+                  <Link to="/register" search={{ redirect: inviteRedirect }} className="flex-1"><Button variant="outline" className="w-full">Crear cuenta</Button></Link>
                 </div>
               </div>
             ) : wrongEmail ? (
@@ -110,7 +111,7 @@ function InvitePage() {
                 <div className="rounded-lg bg-destructive/10 text-destructive text-sm p-3">
                   Estás autenticado como <span className="font-medium">{user.email}</span>, pero esta invitación es para <span className="font-medium">{inv.email}</span>.
                 </div>
-                <Button variant="outline" className="w-full" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/login" }); }}>
+                <Button variant="outline" className="w-full" onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/login", search: { redirect: inviteRedirect } }); }}>
                   Cerrar sesión y entrar con el email correcto
                 </Button>
               </div>
