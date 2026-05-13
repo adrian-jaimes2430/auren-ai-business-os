@@ -33,17 +33,20 @@ function InvitePage() {
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase
-        .from("organization_invitations")
-        .select("id, email, role, status, expires_at, organization_id")
-        .eq("token", token)
-        .maybeSingle();
-      if (error || !data) {
+      const { data, error } = await supabase.rpc("get_invitation_by_token", { _token: token });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (error || !row) {
         setError("Esta invitación no existe.");
       } else {
-        setInv(data as Inv);
-        const { data: org } = await supabase.from("organizations").select("name").eq("id", data.organization_id).maybeSingle();
-        setOrgName(org?.name ?? "");
+        setInv({
+          id: row.id,
+          email: row.email,
+          role: row.role,
+          status: row.status,
+          expires_at: row.expires_at,
+          organization_id: row.organization_id,
+        });
+        setOrgName(row.organization_name ?? "");
       }
       setLoading(false);
     })();
