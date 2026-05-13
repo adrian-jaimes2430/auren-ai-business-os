@@ -6,7 +6,9 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrganization } from "@/hooks/use-organization";
 import { OrgOnboarding } from "@/components/app/OrgOnboarding";
+import { PendingInvitations } from "@/components/app/PendingInvitations";
 import { AurenLogo } from "@/components/brand/AurenLogo";
+import { useState } from "react";
 
 export const Route = createFileRoute("/app")({
   component: AppLayoutWrapper,
@@ -23,6 +25,7 @@ function AppLayoutWrapper() {
 
 function AppGate() {
   const { loading, currentOrg, refresh } = useOrganization();
+  const [forceCreate, setForceCreate] = useState(false);
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center">
@@ -30,7 +33,10 @@ function AppGate() {
       </div>
     );
   }
-  if (!currentOrg) return <OrgOnboarding onCreated={refresh} />;
+  if (!currentOrg) {
+    if (forceCreate) return <OrgOnboarding onCreated={refresh} />;
+    return <PendingInvitations onJoined={refresh} onCreateNew={() => setForceCreate(true)} />;
+  }
   return <AppLayout />;
 }
 

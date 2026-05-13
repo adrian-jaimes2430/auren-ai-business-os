@@ -38,7 +38,7 @@ function RegisterPage() {
     setLoading(true);
     try {
       const redirectUrl = `${window.location.origin}${getSafeRedirect(redirect) ?? "/app"}`;
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -47,8 +47,14 @@ function RegisterPage() {
         },
       });
       if (error) throw error;
-      toast.success("Cuenta creada. Revisa tu email para confirmar.");
-      navigate({ to: "/login", search: redirect ? { redirect } : undefined });
+      // If session is active immediately (email confirmation disabled), go to redirect.
+      if (data.session) {
+        toast.success("Cuenta creada");
+        navigate({ to: getSafeRedirect(redirect) ?? "/app" });
+      } else {
+        toast.success("Cuenta creada. Revisa tu email para confirmar.");
+        navigate({ to: "/login", search: redirect ? { redirect } : undefined });
+      }
     } catch (err: any) {
       toast.error(err.message ?? "No se pudo crear la cuenta");
     } finally {
