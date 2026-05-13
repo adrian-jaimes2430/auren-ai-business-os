@@ -6,7 +6,9 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrganization } from "@/hooks/use-organization";
 import { OrgOnboarding } from "@/components/app/OrgOnboarding";
+import { PendingInvitations } from "@/components/app/PendingInvitations";
 import { AurenLogo } from "@/components/brand/AurenLogo";
+import { useState } from "react";
 
 export const Route = createFileRoute("/app")({
   component: AppLayoutWrapper,
