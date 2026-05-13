@@ -419,12 +419,26 @@ function NewConversationDialog({
       return;
     }
     setSaving(true);
+    let channelId: string | null = null;
+    if (channel === "whatsapp") {
+      const { data: activeChannel } = await supabase
+        .from("channels")
+        .select("id")
+        .eq("organization_id", orgId)
+        .eq("provider", "whatsapp")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      channelId = activeChannel?.id ?? null;
+    }
     const { data: contact, error: cErr } = await supabase
       .from("contacts")
       .insert({
         organization_id: orgId,
         full_name: name.trim(),
         phone: phone.trim() || null,
+        external_id: channel === "whatsapp" ? phone.replace(/\D/g, "") || null : null,
         email: email.trim() || null,
         source: channel,
       })
@@ -441,6 +455,7 @@ function NewConversationDialog({
         organization_id: orgId,
         contact_id: contact.id,
         channel,
+        channel_id: channelId,
         subject: subject.trim() || null,
         status: "open",
       })
