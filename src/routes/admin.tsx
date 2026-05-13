@@ -14,6 +14,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useTickets, STATUS_LABEL, STATUS_TONE, PRIORITY_LABEL, PRIORITY_TONE, type Ticket } from "@/hooks/use-tickets";
+import { TicketDetailDialog } from "@/routes/app.support";
+import { LifeBuoy, Inbox } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPanelWrapper,
@@ -196,97 +200,110 @@ function AdminPanel() {
           </div>
         )}
 
-        <div className="mt-6 rounded-2xl glass overflow-hidden">
-          <div className="p-4 sm:p-5 border-b border-border/60 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-            <div className="font-display text-lg font-semibold">Organizaciones</div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar..." className="pl-8 h-9 w-full sm:w-56" />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="trial">Prueba</SelectItem>
-                  <SelectItem value="pending">Pendientes</SelectItem>
-                  <SelectItem value="active">Activas</SelectItem>
-                  <SelectItem value="past_due">Vencidas</SelectItem>
-                  <SelectItem value="suspended">Suspendidas</SelectItem>
-                  <SelectItem value="canceled">Canceladas</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+        <Tabs defaultValue="orgs" className="mt-6">
+          <TabsList>
+            <TabsTrigger value="orgs"><Building2 className="h-3.5 w-3.5 mr-1.5" />Organizaciones</TabsTrigger>
+            <TabsTrigger value="tickets"><LifeBuoy className="h-3.5 w-3.5 mr-1.5" />Tickets de soporte</TabsTrigger>
+          </TabsList>
 
-          {loading ? (
-            <div className="p-12 grid place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-          ) : filtered.length === 0 ? (
-            <div className="p-12 text-center text-sm text-muted-foreground">No hay organizaciones que coincidan</div>
-          ) : (
-            <div className="divide-y divide-border/60">
-              {filtered.map((org) => {
-                const sub = org.subscription;
-                const meta = sub ? STATUS_META[sub.status] : { label: "Sin sub", tone: "bg-muted text-muted-foreground border-border" };
-                const trialDays = sub?.trial_ends_at ? Math.max(0, Math.ceil((new Date(sub.trial_ends_at).getTime() - Date.now()) / 86400000)) : null;
-                return (
-                  <div key={org.id} className="p-4 sm:px-5 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-surface/40 transition">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium truncate">{org.name}</span>
-                        <Badge className={`${meta.tone} border text-[10px]`} variant="outline">{meta.label}</Badge>
-                        <Badge variant="outline" className="text-[10px] uppercase">{sub?.plan ?? org.plan}</Badge>
-                      </div>
-                      <div className="mt-1 text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
-                        <span>{org.owner_email ?? "—"}</span>
-                        <span>·</span>
-                        <span>{org.member_count} miembro(s)</span>
-                        <span>·</span>
-                        <span>creada {formatDistanceToNow(new Date(org.created_at), { addSuffix: true, locale: es })}</span>
-                        {sub?.status === "trial" && trialDays !== null && (
-                          <><span>·</span><span className={trialDays <= 3 ? "text-amber-300" : ""}>trial: {trialDays}d restantes</span></>
-                        )}
-                        {sub && sub.mrr_cents > 0 && sub.status === "active" && (
-                          <><span>·</span><span className="text-emerald-300">${(sub.mrr_cents / 100).toLocaleString()}/mes</span></>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {sub?.status === "pending" && (
-                        <>
-                          <Button size="sm" variant="default" onClick={() => quickAction(org, { status: "active", current_period_start: new Date().toISOString(), current_period_end: new Date(Date.now() + 30 * 86400000).toISOString() }, "Aprobada")}>
-                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Aprobar
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => quickAction(org, { status: "canceled" }, "Rechazada")}>
-                            <XCircle className="h-3.5 w-3.5 mr-1" />Rechazar
-                          </Button>
-                        </>
-                      )}
-                      {sub?.status === "active" && (
-                        <Button size="sm" variant="outline" onClick={() => quickAction(org, { status: "suspended" }, "Suspendida")}>
-                          <PauseCircle className="h-3.5 w-3.5 mr-1" />Suspender
-                        </Button>
-                      )}
-                      {sub?.status === "suspended" && (
-                        <Button size="sm" variant="outline" onClick={() => quickAction(org, { status: "active" }, "Reactivada")}>
-                          <PlayCircle className="h-3.5 w-3.5 mr-1" />Reactivar
-                        </Button>
-                      )}
-                      {sub?.status === "trial" && (
-                        <Button size="sm" variant="outline" onClick={() => quickAction(org, { trial_ends_at: new Date(Date.now() + 14 * 86400000).toISOString() }, "Trial extendido +14d")}>
-                          +14d
-                        </Button>
-                      )}
-                      <Button size="sm" variant="ghost" onClick={() => setEditing(org)}>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
+          <TabsContent value="orgs">
+            <div className="rounded-2xl glass overflow-hidden">
+              <div className="p-4 sm:p-5 border-b border-border/60 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                <div className="font-display text-lg font-semibold">Organizaciones</div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar..." className="pl-8 h-9 w-full sm:w-56" />
                   </div>
-                );
-              })}
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="trial">Prueba</SelectItem>
+                      <SelectItem value="pending">Pendientes</SelectItem>
+                      <SelectItem value="active">Activas</SelectItem>
+                      <SelectItem value="past_due">Vencidas</SelectItem>
+                      <SelectItem value="suspended">Suspendidas</SelectItem>
+                      <SelectItem value="canceled">Canceladas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="p-12 grid place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+              ) : filtered.length === 0 ? (
+                <div className="p-12 text-center text-sm text-muted-foreground">No hay organizaciones que coincidan</div>
+              ) : (
+                <div className="divide-y divide-border/60">
+                  {filtered.map((org) => {
+                    const sub = org.subscription;
+                    const meta = sub ? STATUS_META[sub.status] : { label: "Sin sub", tone: "bg-muted text-muted-foreground border-border" };
+                    const trialDays = sub?.trial_ends_at ? Math.max(0, Math.ceil((new Date(sub.trial_ends_at).getTime() - Date.now()) / 86400000)) : null;
+                    return (
+                      <div key={org.id} className="p-4 sm:px-5 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-surface/40 transition">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium truncate">{org.name}</span>
+                            <Badge className={`${meta.tone} border text-[10px]`} variant="outline">{meta.label}</Badge>
+                            <Badge variant="outline" className="text-[10px] uppercase">{sub?.plan ?? org.plan}</Badge>
+                          </div>
+                          <div className="mt-1 text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                            <span>{org.owner_email ?? "—"}</span>
+                            <span>·</span>
+                            <span>{org.member_count} miembro(s)</span>
+                            <span>·</span>
+                            <span>creada {formatDistanceToNow(new Date(org.created_at), { addSuffix: true, locale: es })}</span>
+                            {sub?.status === "trial" && trialDays !== null && (
+                              <><span>·</span><span className={trialDays <= 3 ? "text-amber-300" : ""}>trial: {trialDays}d restantes</span></>
+                            )}
+                            {sub && sub.mrr_cents > 0 && sub.status === "active" && (
+                              <><span>·</span><span className="text-emerald-300">${(sub.mrr_cents / 100).toLocaleString()}/mes</span></>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {sub?.status === "pending" && (
+                            <>
+                              <Button size="sm" variant="default" onClick={() => quickAction(org, { status: "active", current_period_start: new Date().toISOString(), current_period_end: new Date(Date.now() + 30 * 86400000).toISOString() }, "Aprobada")}>
+                                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Aprobar
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => quickAction(org, { status: "canceled" }, "Rechazada")}>
+                                <XCircle className="h-3.5 w-3.5 mr-1" />Rechazar
+                              </Button>
+                            </>
+                          )}
+                          {sub?.status === "active" && (
+                            <Button size="sm" variant="outline" onClick={() => quickAction(org, { status: "suspended" }, "Suspendida")}>
+                              <PauseCircle className="h-3.5 w-3.5 mr-1" />Suspender
+                            </Button>
+                          )}
+                          {sub?.status === "suspended" && (
+                            <Button size="sm" variant="outline" onClick={() => quickAction(org, { status: "active" }, "Reactivada")}>
+                              <PlayCircle className="h-3.5 w-3.5 mr-1" />Reactivar
+                            </Button>
+                          )}
+                          {sub?.status === "trial" && (
+                            <Button size="sm" variant="outline" onClick={() => quickAction(org, { trial_ends_at: new Date(Date.now() + 14 * 86400000).toISOString() }, "Trial extendido +14d")}>
+                              +14d
+                            </Button>
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => setEditing(org)}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </TabsContent>
+
+          <TabsContent value="tickets">
+            <AdminTicketsPanel userId={user?.id ?? null} orgsById={Object.fromEntries(orgs.map((o) => [o.id, o.name]))} />
+          </TabsContent>
+        </Tabs>
       </main>
 
       <EditDialog org={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} adminId={user?.id ?? null} />
@@ -404,5 +421,118 @@ function EditDialog({ org, onClose, onSaved, adminId }: { org: OrgRow | null; on
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function AdminTicketsPanel({ userId, orgsById }: { userId: string | null; orgsById: Record<string, string> }) {
+  const { tickets, loading, refresh } = useTickets({ mode: "all" });
+  const [active, setActive] = useState<Ticket | null>(null);
+  const [statusF, setStatusF] = useState<string>("all");
+  const [supportMembers, setSupportMembers] = useState<{ id: string; label: string }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data: orgs } = await supabase.from("organizations").select("id").eq("is_support_org", true);
+      const orgIds = (orgs ?? []).map((o: any) => o.id);
+      if (orgIds.length === 0) return;
+      const { data: members } = await supabase
+        .from("organization_members")
+        .select("user_id")
+        .in("organization_id", orgIds);
+      const ids = Array.from(new Set((members ?? []).map((m: any) => m.user_id)));
+      if (ids.length === 0) return;
+      const { data: profiles } = await supabase.from("profiles").select("id,email,full_name").in("id", ids);
+      setSupportMembers((profiles ?? []).map((p: any) => ({ id: p.id, label: p.full_name || p.email || p.id })));
+    })();
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (statusF === "all") return tickets;
+    if (statusF === "unassigned") return tickets.filter((t) => !t.assigned_to);
+    return tickets.filter((t) => t.status === statusF);
+  }, [tickets, statusF]);
+
+  const counts = useMemo(() => ({
+    open: tickets.filter((t) => t.status === "open").length,
+    in_progress: tickets.filter((t) => t.status === "in_progress").length,
+    unassigned: tickets.filter((t) => !t.assigned_to && t.status !== "closed" && t.status !== "resolved").length,
+  }), [tickets]);
+
+  return (
+    <div className="rounded-2xl glass overflow-hidden">
+      <div className="p-4 sm:p-5 border-b border-border/60 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        <div>
+          <div className="font-display text-lg font-semibold">Tickets de soporte</div>
+          <div className="text-xs text-muted-foreground mt-0.5">
+            {counts.open} abiertos · {counts.in_progress} en proceso · {counts.unassigned} sin asignar
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={statusF} onValueChange={setStatusF}>
+            <SelectTrigger className="h-9 w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="unassigned">Sin asignar</SelectItem>
+              <SelectItem value="open">Abiertos</SelectItem>
+              <SelectItem value="in_progress">En proceso</SelectItem>
+              <SelectItem value="waiting_user">Esperando usuario</SelectItem>
+              <SelectItem value="resolved">Resueltos</SelectItem>
+              <SelectItem value="closed">Cerrados</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" onClick={refresh} disabled={loading}>
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Actualizar"}
+          </Button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="p-12 grid place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+      ) : filtered.length === 0 ? (
+        <div className="p-12 text-center text-sm text-muted-foreground">
+          <Inbox className="h-8 w-8 mx-auto mb-3 opacity-50" />
+          No hay tickets que coincidan
+        </div>
+      ) : (
+        <div className="divide-y divide-border/60">
+          {filtered.map((t) => {
+            const assignedLabel = t.assigned_to ? (supportMembers.find((m) => m.id === t.assigned_to)?.label ?? "Asignado") : "Sin asignar";
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActive(t)}
+                className="w-full text-left p-4 sm:px-5 hover:bg-surface/40 transition flex flex-col sm:flex-row sm:items-center gap-2"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium truncate">{t.subject}</span>
+                    <Badge variant="outline" className={`${STATUS_TONE[t.status]} text-[10px]`}>{STATUS_LABEL[t.status]}</Badge>
+                    <Badge variant="outline" className={`${PRIORITY_TONE[t.priority]} text-[10px]`}>{PRIORITY_LABEL[t.priority]}</Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+                    <span>{orgsById[t.organization_id] ?? "Org desconocida"}</span>
+                    <span>·</span>
+                    <span>{t.category}</span>
+                    <span>·</span>
+                    <span>{assignedLabel}</span>
+                    <span>·</span>
+                    <span>{formatDistanceToNow(new Date(t.created_at), { addSuffix: true, locale: es })}</span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <TicketDetailDialog
+        ticket={active}
+        onClose={() => setActive(null)}
+        userId={userId}
+        canManageStatus
+        supportMembers={supportMembers}
+        onChanged={() => { refresh(); }}
+      />
+    </div>
   );
 }

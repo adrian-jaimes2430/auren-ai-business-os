@@ -23,6 +23,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AppTeamRouteImport } from './routes/app.team'
+import { Route as AppSupportRouteImport } from './routes/app.support'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppMarketingRouteImport } from './routes/app.marketing'
 import { Route as AppKnowledgeRouteImport } from './routes/app.knowledge'
@@ -33,6 +34,7 @@ import { Route as AppChannelsRouteImport } from './routes/app.channels'
 import { Route as AppAutomationsRouteImport } from './routes/app.automations'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppAiRouteImport } from './routes/app.ai'
+import { Route as AppAcademyRouteImport } from './routes/app.academy'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicWebhooksWhatsappOrgIdChannelIdRouteImport } from './routes/api/public/webhooks/whatsapp/$orgId/$channelId'
 
@@ -106,6 +108,11 @@ const AppTeamRoute = AppTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSupportRoute = AppSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -156,6 +163,11 @@ const AppAiRoute = AppAiRouteImport.update({
   path: '/ai',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAcademyRoute = AppAcademyRouteImport.update({
+  id: '/academy',
+  path: '/academy',
+  getParentRoute: () => AppRoute,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -181,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/app/academy': typeof AppAcademyRoute
   '/app/ai': typeof AppAiRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/automations': typeof AppAutomationsRoute
@@ -191,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/app/knowledge': typeof AppKnowledgeRoute
   '/app/marketing': typeof AppMarketingRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/support': typeof AppSupportRoute
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/': typeof AppIndexRoute
@@ -208,6 +222,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/app/academy': typeof AppAcademyRoute
   '/app/ai': typeof AppAiRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/automations': typeof AppAutomationsRoute
@@ -218,6 +233,7 @@ export interface FileRoutesByTo {
   '/app/knowledge': typeof AppKnowledgeRoute
   '/app/marketing': typeof AppMarketingRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/support': typeof AppSupportRoute
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app': typeof AppIndexRoute
@@ -237,6 +253,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
+  '/app/academy': typeof AppAcademyRoute
   '/app/ai': typeof AppAiRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/automations': typeof AppAutomationsRoute
@@ -247,6 +264,7 @@ export interface FileRoutesById {
   '/app/knowledge': typeof AppKnowledgeRoute
   '/app/marketing': typeof AppMarketingRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/support': typeof AppSupportRoute
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/': typeof AppIndexRoute
@@ -267,6 +285,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/terms'
+    | '/app/academy'
     | '/app/ai'
     | '/app/analytics'
     | '/app/automations'
@@ -277,6 +296,7 @@ export interface FileRouteTypes {
     | '/app/knowledge'
     | '/app/marketing'
     | '/app/settings'
+    | '/app/support'
     | '/app/team'
     | '/invite/$token'
     | '/app/'
@@ -294,6 +314,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/terms'
+    | '/app/academy'
     | '/app/ai'
     | '/app/analytics'
     | '/app/automations'
@@ -304,6 +325,7 @@ export interface FileRouteTypes {
     | '/app/knowledge'
     | '/app/marketing'
     | '/app/settings'
+    | '/app/support'
     | '/app/team'
     | '/invite/$token'
     | '/app'
@@ -322,6 +344,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/terms'
+    | '/app/academy'
     | '/app/ai'
     | '/app/analytics'
     | '/app/automations'
@@ -332,6 +355,7 @@ export interface FileRouteTypes {
     | '/app/knowledge'
     | '/app/marketing'
     | '/app/settings'
+    | '/app/support'
     | '/app/team'
     | '/invite/$token'
     | '/app/'
@@ -456,6 +480,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTeamRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/support': {
+      id: '/app/support'
+      path: '/support'
+      fullPath: '/app/support'
+      preLoaderRoute: typeof AppSupportRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/settings': {
       id: '/app/settings'
       path: '/settings'
@@ -526,6 +557,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/academy': {
+      id: '/app/academy'
+      path: '/academy'
+      fullPath: '/app/academy'
+      preLoaderRoute: typeof AppAcademyRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -544,6 +582,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAcademyRoute: typeof AppAcademyRoute
   AppAiRoute: typeof AppAiRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppAutomationsRoute: typeof AppAutomationsRoute
@@ -554,11 +593,13 @@ interface AppRouteChildren {
   AppKnowledgeRoute: typeof AppKnowledgeRoute
   AppMarketingRoute: typeof AppMarketingRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppSupportRoute: typeof AppSupportRoute
   AppTeamRoute: typeof AppTeamRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAcademyRoute: AppAcademyRoute,
   AppAiRoute: AppAiRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppAutomationsRoute: AppAutomationsRoute,
@@ -569,6 +610,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppKnowledgeRoute: AppKnowledgeRoute,
   AppMarketingRoute: AppMarketingRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppSupportRoute: AppSupportRoute,
   AppTeamRoute: AppTeamRoute,
   AppIndexRoute: AppIndexRoute,
 }
@@ -595,13 +637,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
