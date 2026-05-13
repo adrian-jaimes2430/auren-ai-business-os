@@ -423,3 +423,116 @@ function EditDialog({ org, onClose, onSaved, adminId }: { org: OrgRow | null; on
     </Dialog>
   );
 }
+
+function AdminTicketsPanel({ userId, orgsById }: { userId: string | null; orgsById: Record<string, string> }) {
+  const { tickets, loading, refresh } = useTickets({ mode: "all" });
+  const [active, setActive] = useState<Ticket | null>(null);
+  const [statusF, setStatusF] = useState<string>("all");
+  const [supportMembers, setSupportMembers] = useState<{ id: string; label: string }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data: orgs } = await supabase.from("organizations").select("id").eq("is_support_org", true);
+      const orgIds = (orgs ?? []).map((o: any) => o.id);
+      if (orgIds.length === 0) return;
+      const { data: members } = await supabase
+        .from("organization_members")
+        .select("user_id")
+        .in("organization_id", orgIds);
+      const ids = Array.from(new Set((members ?? []).map((m: any) => m.user_id)));
+      if (ids.length === 0) return;
+      const { data: profiles } = await supabase.from("profiles").select("id,email,full_name").in("id", ids);
+      setSupportMembers((profiles ?? []).map((p: any) => ({ id: p.id, label: p.full_name || p.email || p.id })));
+    })();
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (statusF === "all") return tickets;
+    if (statusF === "unassigned") return tickets.filter((t) => !t.assigned_to);
+    return tickets.filter((t) => t.status === statusF);
+  }, [tickets, statusF]);
+
+  const counts = useMemo(() => ({
+    open: tickets.filter((t) => t.status === "open").length,
+    in_progress: tickets.filter((t) => t.status === "in_progress").length,
+    unassigned: tickets.filter((t) => !t.assigned_to && t.status !== "closed" && t.status !== "resolved").length,
+  }), [tickets]);
+
+  return (
+    <div className="rounded-2xl glass overflow-hidden">
+      <div className="p-4 sm:p-5 border-b border-border/60 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        <div>
+          <div className="font-display text-lg font-semibold">Tickets de soporte</div>
+          <div className="text-xs text-muted-foreground mt-0.5">
+            {counts.open} abiertos · {counts.in_progress} en proceso · {counts.unassigned} sin asignar
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={statusF} onValueChange={setStatusF}>
+            <SelectTrigger className="h-9 w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="unassigned">Sin asignar</SelectItem>
+              <SelectItem value="open">Abiertos</SelectItem>
+              <SelectItem value="in_progress">En proceso</SelectItem>
+              <SelectItem value="waiting_user">Esperando usuario</SelectItem>
+              <SelectItem value="resolved">Resueltos</SelectItem>
+              <SelectItem value="closed">Cerrados</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" onClick={refresh} disabled={loading}>
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Actualizar"}
+          </Button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="p-12 grid place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+      ) : filtered.length === 0 ? (
+        <div className="p-12 text-center text-sm text-muted-foreground">
+          <Inbox className="h-8 w-8 mx-auto mb-3 opacity-50" />
+          No hay tickets que coincidan
+        </div>
+      ) : (
+        <div className="divide-y divide-border/60">
+          {filtered.map((t) => {
+            const assignedLabel = t.assigned_to ? (supportMembers.find((m) => m.id === t.assigned_to)?.label ?? "Asignado") : "Sin asignar";
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActive(t)}
+                className="w-full text-left p-4 sm:px-5 hover:bg-surface/40 transition flex flex-col sm:flex-row sm:items-center gap-2"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium truncate">{t.subject}</span>
+                    <Badge variant="outline" className={`${STATUS_TONE[t.status]} text-[10px]`}>{STATUS_LABEL[t.status]}</Badge>
+                    <Badge variant="outline" className={`${PRIORITY_TONE[t.priority]} text-[10px]`}>{PRIORITY_LABEL[t.priority]}</Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+                    <span>{orgsById[t.organization_id] ?? "Org desconocida"}</span>
+                    <span>·</span>
+                    <span>{t.category}</span>
+                    <span>·</span>
+                    <span>{assignedLabel}</span>
+                    <span>·</span>
+                    <span>{formatDistanceToNow(new Date(t.created_at), { addSuffix: true, locale: es })}</span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <TicketDetailDialog
+        ticket={active}
+        onClose={() => setActive(null)}
+        userId={userId}
+        canManageStatus
+        supportMembers={supportMembers}
+        onChanged={() => { refresh(); }}
+      />
+    </div>
+  );
+}
