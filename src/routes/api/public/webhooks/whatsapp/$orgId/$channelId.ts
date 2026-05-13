@@ -243,7 +243,7 @@ async function runAiAutoReply(opts: {
     const reply: string = aiJson?.choices?.[0]?.message?.content?.trim();
     if (!reply) return;
 
-    const phoneNumberId = opts.channel.config?.phone_number_id;
+    const phoneNumberId = opts.channel.config?.phone_number_id || opts.channel.external_id;
     let delivery: any = null;
     let deliveryError: string | null = null;
     if (opts.channel.access_token && phoneNumberId) {
