@@ -452,3 +452,70 @@ function TestWebhookDialog({ channel, orgId, baseUrl, onClose }: {
     </DialogContent>
   );
 }
+
+function EditChannelDialog({ channel, onSaved, onClose }: {
+  channel: Channel; onSaved: () => void; onClose: () => void;
+}) {
+  const meta = providerMeta(channel.provider);
+  const [name, setName] = useState(channel.name);
+  const cfg = (channel.config as any) || {};
+  const [phoneNumberId, setPhoneNumberId] = useState<string>(cfg.phone_number_id || channel.external_id || "");
+  const [accessToken, setAccessToken] = useState<string>(channel.access_token || "");
+  const [saving, setSaving] = useState(false);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    const newConfig = channel.provider === "whatsapp"
+      ? { ...cfg, phone_number_id: phoneNumberId || null }
+      : cfg;
+    const { error } = await supabase.from("channels").update({
+      name,
+      external_id: phoneNumberId || null,
+      access_token: accessToken || null,
+      config: newConfig,
+    }).eq("id", channel.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Credenciales actualizadas");
+    onSaved();
+  };
+
+  return (
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Settings className="h-4 w-4 text-primary" /> Editar {meta.name}
+        </DialogTitle>
+        <DialogDescription>
+          Actualiza el Phone Number ID y el Access Token. Sin estos datos los mensajes salientes no se entregan.
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={save} className="space-y-4">
+        <div>
+          <Label>Nombre interno</Label>
+          <Input className="mt-1.5" value={name} onChange={(e) => setName(e.target.value)} required />
+        </div>
+        {channel.provider === "whatsapp" && (
+          <>
+            <div>
+              <Label>Phone Number ID</Label>
+              <Input className="mt-1.5 font-mono" value={phoneNumberId} onChange={(e) => setPhoneNumberId(e.target.value)} placeholder="1234567890" />
+              <p className="text-[11px] text-muted-foreground mt-1.5">Lo encuentras en Meta → WhatsApp → API Setup.</p>
+            </div>
+            <div>
+              <Label>Access Token (permanente)</Label>
+              <Input className="mt-1.5 font-mono" type="password" value={accessToken} onChange={(e) => setAccessToken(e.target.value)} placeholder="EAAG..." />
+            </div>
+          </>
+        )}
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Guardando…</> : "Guardar"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
