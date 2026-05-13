@@ -196,9 +196,9 @@ function ChannelsPage() {
   );
 }
 
-function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, onTest }: {
+function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, onTest, onEdit }: {
   channel: Channel; baseUrl: string; orgId: string; canManage: boolean;
-  onToggle: () => void; onRemove: () => void; onTest: () => void;
+  onToggle: () => void; onRemove: () => void; onTest: () => void; onEdit: () => void;
 }) {
   const meta = providerMeta(channel.provider);
   const [copied, setCopied] = useState<string | null>(null);
