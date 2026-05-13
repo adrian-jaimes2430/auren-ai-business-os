@@ -47,6 +47,7 @@ function ChannelsPage() {
   const [addOpen, setAddOpen] = useState<Provider | null>(null);
   const [removeTarget, setRemoveTarget] = useState<Channel | null>(null);
   const [testTarget, setTestTarget] = useState<Channel | null>(null);
+  const [editTarget, setEditTarget] = useState<Channel | null>(null);
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
 
