@@ -89,13 +89,35 @@ Deno.serve(async (req: Request) => {
     let externalDelivery: any = null;
     let deliveryError: string | null = null;
 
-    // Attempt external delivery for WhatsApp if a channel is configured
-    if (conv.channel === "whatsapp" && conv.channel_id) {
-      const { data: channel } = await admin
-        .from("channels")
-        .select("access_token, config, is_active, external_id")
-        .eq("id", conv.channel_id)
-        .maybeSingle();
+    // Attempt external delivery for WhatsApp. Older conversations may not have
+    // channel_id set, so fall back to the active WhatsApp channel for the org.
+    let resolvedChannelId = conv.channel_id;
+    if (conv.channel === "whatsapp") {
+      let channel: any = null;
+      if (resolvedChannelId) {
+        const { data } = await admin
+          .from("channels")
+          .select("id, access_token, config, is_active, external_id")
+          .eq("id", resolvedChannelId)
+          .maybeSingle();
+        channel = data;
+      }
+      if (!channel) {
+        const { data } = await admin
+          .from("channels")
+          .select("id, access_token, config, is_active, external_id")
+          .eq("organization_id", conv.organization_id)
+          .eq("provider", "whatsapp")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        channel = data;
+        resolvedChannelId = data?.id ?? null;
+        if (resolvedChannelId) {
+          await admin.from("conversations").update({ channel_id: resolvedChannelId }).eq("id", conv.id);
+        }
+      }
       const phoneNumberId =
         (channel?.config as any)?.phone_number_id || channel?.external_id;
       if (channel?.is_active && channel.access_token && phoneNumberId && conv.contact_id) {
@@ -123,6 +145,8 @@ Deno.serve(async (req: Request) => {
       } else if (!channel?.access_token || !phoneNumberId) {
         deliveryError = "Canal sin credenciales (falta access_token o phone_number_id)";
       }
+    } else if (conv.channel === "whatsapp") {
+      deliveryError = "No hay un canal de WhatsApp activo para esta organización";
     }
 
     // Persist message
@@ -137,6 +161,7 @@ Deno.serve(async (req: Request) => {
         is_ai: !!ai,
         metadata: {
           delivery: externalDelivery ? "sent" : deliveryError ? "failed" : "local",
+          channel_id: resolvedChannelId,
           provider_response: externalDelivery,
           error: deliveryError,
         },
