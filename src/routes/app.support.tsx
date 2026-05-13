@@ -126,7 +126,8 @@ function SupportPage() {
         onClose={() => setActive(null)}
         userId={user?.id ?? null}
         onChanged={() => { refresh(); }}
-        canManageStatus={false}
+        canManageStatus={isStaff}
+        supportMembers={isStaff ? supportMembers : undefined}
       />
     </div>
   );
