@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { LifeBuoy, Plus, Loader2, Send, MessageSquare, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrganization } from "@/hooks/use-organization";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useTickets, createTicket, updateTicket, fetchTicketMessages, postTicketMessage,
   STATUS_LABEL, STATUS_TONE, PRIORITY_LABEL, PRIORITY_TONE,
