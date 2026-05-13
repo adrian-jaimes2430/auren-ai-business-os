@@ -290,6 +290,7 @@ function AddChannelDialog({ provider, orgId, baseUrl, onCreated, onClose }: {
       name,
       external_id: externalId || null,
       access_token: accessToken || null,
+      config: provider === "whatsapp" && externalId ? { phone_number_id: externalId } : {},
     }).select().single();
     setSubmitting(false);
     if (error) return toast.error(error.message);
