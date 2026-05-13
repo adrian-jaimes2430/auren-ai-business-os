@@ -9,12 +9,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
   component: LoginPage,
   head: () => ({ meta: [{ title: "Entrar — AUREN AI" }] }),
 });
 
+function getSafeRedirect(redirect: string | undefined) {
+  if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//")) return null;
+  return redirect;
+}
+
 function LoginPage() {
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,7 +44,7 @@ function LoginPage() {
 
       const isSuperAdmin = roles?.some((r) => r.role === "super_admin");
       toast.success("Bienvenido a AUREN AI");
-      navigate({ to: isSuperAdmin ? "/admin" : "/app" });
+      navigate({ to: (getSafeRedirect(redirect) ?? (isSuperAdmin ? "/admin" : "/app")) as any });
     } catch (err: any) {
       toast.error(err.message ?? "Credenciales inválidas");
     } finally {
@@ -104,7 +113,7 @@ function LoginPage() {
           </form>
           <p className="mt-6 text-sm text-muted-foreground text-center">
             ¿No tienes cuenta?{" "}
-            <Link to="/register" className="text-foreground hover:text-primary">Regístrate</Link>
+            <Link to="/register" search={redirect ? { redirect } : undefined} className="text-foreground hover:text-primary">Regístrate</Link>
           </p>
         </div>
       </div>
