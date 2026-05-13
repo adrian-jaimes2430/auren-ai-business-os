@@ -146,6 +146,7 @@ function ChannelsPage() {
                 onToggle={() => toggleActive(c)}
                 onRemove={() => setRemoveTarget(c)}
                 onTest={() => setTestTarget(c)}
+                onEdit={() => setEditTarget(c)}
               />
             ))}
           </div>
