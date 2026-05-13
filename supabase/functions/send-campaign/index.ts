@@ -113,13 +113,27 @@ Deno.serve(async (req: Request) => {
       failed_count: 0,
     }).eq("id", campaign.id);
 
-    // Channel credentials (WhatsApp only for now)
+    // Channel credentials (WhatsApp only for now). If a campaign was created
+    // without channel_id, use the latest active WhatsApp channel for the org.
     let waCreds: { token: string; phoneNumberId: string } | null = null;
-    if (campaign.channel === "whatsapp" && campaign.channel_id) {
+    if (campaign.channel === "whatsapp") {
+      let selectedChannelId = campaign.channel_id;
+      if (!selectedChannelId) {
+        const { data: fallback } = await admin
+          .from("channels")
+          .select("id")
+          .eq("organization_id", campaign.organization_id)
+          .eq("provider", "whatsapp")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        selectedChannelId = fallback?.id ?? null;
+      }
       const { data: ch } = await admin
         .from("channels")
         .select("access_token, config, is_active, external_id")
-        .eq("id", campaign.channel_id)
+        .eq("id", selectedChannelId)
         .maybeSingle();
       const phoneNumberId = (ch?.config as any)?.phone_number_id || ch?.external_id;
       if (ch?.is_active && ch.access_token && phoneNumberId) {
