@@ -57,8 +57,6 @@ function SupportPage() {
       setSupportMembers((profiles ?? []).map((p: any) => ({ id: p.id, label: p.full_name || p.email || p.id })));
     })();
   }, [isStaff]);
-  const [openNew, setOpenNew] = useState(false);
-  const [active, setActive] = useState<Ticket | null>(null);
 
   return (
     <div className="p-6 sm:p-8 max-w-6xl mx-auto">
