@@ -25,6 +25,7 @@ function AppLayoutWrapper() {
 
 function AppGate() {
   const { loading, currentOrg, refresh } = useOrganization();
+  const [forceCreate, setForceCreate] = useState(false);
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center">
@@ -32,7 +33,10 @@ function AppGate() {
       </div>
     );
   }
-  if (!currentOrg) return <OrgOnboarding onCreated={refresh} />;
+  if (!currentOrg) {
+    if (forceCreate) return <OrgOnboarding onCreated={refresh} />;
+    return <PendingInvitations onJoined={refresh} onCreateNew={() => setForceCreate(true)} />;
+  }
   return <AppLayout />;
 }
 
