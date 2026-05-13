@@ -126,7 +126,7 @@ Deno.serve(async (req: Request) => {
           .select("phone, external_id")
           .eq("id", conv.contact_id)
           .maybeSingle();
-        const to = contact?.external_id || contact?.phone?.replace(/\D/g, "");
+        const to = (contact?.external_id || contact?.phone || "").replace(/\D/g, "");
         if (to) {
           try {
             externalDelivery = await sendWhatsApp({
