@@ -118,10 +118,10 @@ Deno.serve(async (req: Request) => {
     if (campaign.channel === "whatsapp" && campaign.channel_id) {
       const { data: ch } = await admin
         .from("channels")
-        .select("access_token, config, is_active")
+        .select("access_token, config, is_active, external_id")
         .eq("id", campaign.channel_id)
         .maybeSingle();
-      const phoneNumberId = (ch?.config as any)?.phone_number_id;
+      const phoneNumberId = (ch?.config as any)?.phone_number_id || ch?.external_id;
       if (ch?.is_active && ch.access_token && phoneNumberId) {
         waCreds = { token: ch.access_token, phoneNumberId };
       }
