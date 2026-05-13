@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Plus, Radio, MessageCircle, Instagram, Mail, Phone, MessageSquare, Globe, Copy, Check,
-  Trash2, Power, PowerOff, Loader2, Sparkles, Send,
+  Trash2, Power, PowerOff, Loader2, Sparkles, Send, Settings,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/use-organization";
