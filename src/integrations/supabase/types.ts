@@ -267,10 +267,16 @@ export type Database = {
           id: string
           is_active: boolean
           last_event_at: string | null
+          meta_app_id: string | null
+          meta_business_id: string | null
+          meta_waba_id: string | null
           name: string
           organization_id: string
           provider: Database["public"]["Enums"]["channel_provider"]
           updated_at: string
+          verification_error: string | null
+          verification_status: string
+          verified_at: string | null
           verify_token: string
         }
         Insert: {
@@ -281,10 +287,16 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_event_at?: string | null
+          meta_app_id?: string | null
+          meta_business_id?: string | null
+          meta_waba_id?: string | null
           name: string
           organization_id: string
           provider: Database["public"]["Enums"]["channel_provider"]
           updated_at?: string
+          verification_error?: string | null
+          verification_status?: string
+          verified_at?: string | null
           verify_token?: string
         }
         Update: {
@@ -295,10 +307,16 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_event_at?: string | null
+          meta_app_id?: string | null
+          meta_business_id?: string | null
+          meta_waba_id?: string | null
           name?: string
           organization_id?: string
           provider?: Database["public"]["Enums"]["channel_provider"]
           updated_at?: string
+          verification_error?: string | null
+          verification_status?: string
+          verified_at?: string | null
           verify_token?: string
         }
         Relationships: []
