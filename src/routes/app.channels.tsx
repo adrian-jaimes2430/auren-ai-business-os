@@ -97,7 +97,10 @@ function ChannelsPage() {
           <p className="text-sm text-muted-foreground mt-1">
             Conecta WhatsApp, Instagram, email y más para recibir todo en tu Inbox.
           </p>
-        </div>
+      </div>
+
+      <MetaConnectBanner orgId={currentOrg?.id ?? ""} disabled={!canManage} onConnected={load} />
+
       </div>
 
       {/* Provider catalog */}
