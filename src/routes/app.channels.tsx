@@ -217,15 +217,51 @@ function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, o
 }) {
   const meta = providerMeta(channel.provider);
   const [copied, setCopied] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
   const webhookUrl = channel.provider === "whatsapp"
     ? `${baseUrl}/api/public/webhooks/whatsapp/${orgId}/${channel.id}`
     : null;
+
+  const ch = channel as Channel & {
+    verification_status?: string | null;
+    verified_at?: string | null;
+    verification_error?: string | null;
+  };
+  const status = ch.verification_status ?? "unverified";
 
   const copy = async (label: string, value: string) => {
     await navigator.clipboard.writeText(value);
     setCopied(label);
     toast.success("Copiado");
     setTimeout(() => setCopied(null), 1500);
+  };
+
+  const verify = async () => {
+    setVerifying(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-channel`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ channel_id: channel.id }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "Error de verificación");
+      if (data.ok) {
+        const info = data.info?.display_phone_number || data.info?.username || data.info?.name || "OK";
+        toast.success(`Conexión verificada: ${info}`);
+      } else {
+        toast.error(`No verificada: ${data.error}`);
+      }
+    } catch (e: any) {
+      toast.error(e.message ?? "Error de verificación");
+    } finally {
+      setVerifying(false);
+    }
   };
 
   return (
@@ -245,8 +281,31 @@ function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, o
             ) : (
               <span className="text-xs rounded-full px-2 py-0.5 bg-muted text-muted-foreground">Pausado</span>
             )}
+            {status === "verified" && (
+              <span className="text-xs rounded-full px-2 py-0.5 bg-emerald-500/15 text-emerald-400 inline-flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3" /> Verificado
+              </span>
+            )}
+            {status === "failed" && (
+              <span className="text-xs rounded-full px-2 py-0.5 bg-destructive/15 text-destructive inline-flex items-center gap-1" title={ch.verification_error ?? ""}>
+                <ShieldAlert className="h-3 w-3" /> No verificado
+              </span>
+            )}
+            {status === "unverified" && (
+              <span className="text-xs rounded-full px-2 py-0.5 bg-muted text-muted-foreground inline-flex items-center gap-1">
+                <ShieldQuestion className="h-3 w-3" /> Sin verificar
+              </span>
+            )}
           </div>
           {channel.external_id && <div className="text-xs text-muted-foreground mt-1">ID: {channel.external_id}</div>}
+          {ch.verified_at && (
+            <div className="text-xs text-muted-foreground mt-1">
+              Verificado: {new Date(ch.verified_at).toLocaleString()}
+            </div>
+          )}
+          {status === "failed" && ch.verification_error && (
+            <div className="text-xs text-destructive mt-1 break-words">⚠ {ch.verification_error}</div>
+          )}
           {channel.last_event_at && (
             <div className="text-xs text-muted-foreground mt-1">
               Último evento: {new Date(channel.last_event_at).toLocaleString()}
@@ -255,6 +314,10 @@ function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, o
         </div>
         {canManage && (
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={verify} disabled={verifying} title="Verificar credenciales contra Meta">
+              {verifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+              <span className="ml-1.5">Verificar</span>
+            </Button>
             <Button variant="ghost" size="icon" onClick={onEdit} title="Editar credenciales"><Settings className="h-4 w-4" /></Button>
             <Button variant="ghost" size="icon" onClick={onTest} title="Probar"><Send className="h-4 w-4" /></Button>
             <Button variant="ghost" size="icon" onClick={onToggle} title={channel.is_active ? "Pausar" : "Activar"}>
@@ -274,6 +337,7 @@ function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, o
     </div>
   );
 }
+
 
 function CredField({ label, value, onCopy, copied, mono }: { label: string; value: string; onCopy: () => void; copied: boolean; mono?: boolean }) {
   return (
