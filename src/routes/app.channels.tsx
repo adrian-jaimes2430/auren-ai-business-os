@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Plus, Radio, MessageCircle, Instagram, Mail, Phone, MessageSquare, Globe, Copy, Check,
-  Trash2, Power, PowerOff, Loader2, Sparkles, Send, Settings,
+  Trash2, Power, PowerOff, Loader2, Sparkles, Send, Settings, ShieldCheck, ShieldAlert, ShieldQuestion, Facebook, ExternalLink,
 } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/use-organization";
 import { Button } from "@/components/ui/button";
@@ -96,7 +97,10 @@ function ChannelsPage() {
           <p className="text-sm text-muted-foreground mt-1">
             Conecta WhatsApp, Instagram, email y más para recibir todo en tu Inbox.
           </p>
-        </div>
+      </div>
+
+      <MetaConnectBanner orgId={currentOrg?.id ?? ""} disabled={!canManage} onConnected={load} />
+
       </div>
 
       {/* Provider catalog */}
@@ -213,15 +217,51 @@ function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, o
 }) {
   const meta = providerMeta(channel.provider);
   const [copied, setCopied] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
   const webhookUrl = channel.provider === "whatsapp"
     ? `${baseUrl}/api/public/webhooks/whatsapp/${orgId}/${channel.id}`
     : null;
+
+  const ch = channel as Channel & {
+    verification_status?: string | null;
+    verified_at?: string | null;
+    verification_error?: string | null;
+  };
+  const status = ch.verification_status ?? "unverified";
 
   const copy = async (label: string, value: string) => {
     await navigator.clipboard.writeText(value);
     setCopied(label);
     toast.success("Copiado");
     setTimeout(() => setCopied(null), 1500);
+  };
+
+  const verify = async () => {
+    setVerifying(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-channel`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ channel_id: channel.id }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "Error de verificación");
+      if (data.ok) {
+        const info = data.info?.display_phone_number || data.info?.username || data.info?.name || "OK";
+        toast.success(`Conexión verificada: ${info}`);
+      } else {
+        toast.error(`No verificada: ${data.error}`);
+      }
+    } catch (e: any) {
+      toast.error(e.message ?? "Error de verificación");
+    } finally {
+      setVerifying(false);
+    }
   };
 
   return (
@@ -241,8 +281,31 @@ function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, o
             ) : (
               <span className="text-xs rounded-full px-2 py-0.5 bg-muted text-muted-foreground">Pausado</span>
             )}
+            {status === "verified" && (
+              <span className="text-xs rounded-full px-2 py-0.5 bg-emerald-500/15 text-emerald-400 inline-flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3" /> Verificado
+              </span>
+            )}
+            {status === "failed" && (
+              <span className="text-xs rounded-full px-2 py-0.5 bg-destructive/15 text-destructive inline-flex items-center gap-1" title={ch.verification_error ?? ""}>
+                <ShieldAlert className="h-3 w-3" /> No verificado
+              </span>
+            )}
+            {status === "unverified" && (
+              <span className="text-xs rounded-full px-2 py-0.5 bg-muted text-muted-foreground inline-flex items-center gap-1">
+                <ShieldQuestion className="h-3 w-3" /> Sin verificar
+              </span>
+            )}
           </div>
           {channel.external_id && <div className="text-xs text-muted-foreground mt-1">ID: {channel.external_id}</div>}
+          {ch.verified_at && (
+            <div className="text-xs text-muted-foreground mt-1">
+              Verificado: {new Date(ch.verified_at).toLocaleString()}
+            </div>
+          )}
+          {status === "failed" && ch.verification_error && (
+            <div className="text-xs text-destructive mt-1 break-words">⚠ {ch.verification_error}</div>
+          )}
           {channel.last_event_at && (
             <div className="text-xs text-muted-foreground mt-1">
               Último evento: {new Date(channel.last_event_at).toLocaleString()}
@@ -251,6 +314,10 @@ function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, o
         </div>
         {canManage && (
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={verify} disabled={verifying} title="Verificar credenciales contra Meta">
+              {verifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+              <span className="ml-1.5">Verificar</span>
+            </Button>
             <Button variant="ghost" size="icon" onClick={onEdit} title="Editar credenciales"><Settings className="h-4 w-4" /></Button>
             <Button variant="ghost" size="icon" onClick={onTest} title="Probar"><Send className="h-4 w-4" /></Button>
             <Button variant="ghost" size="icon" onClick={onToggle} title={channel.is_active ? "Pausar" : "Activar"}>
@@ -270,6 +337,7 @@ function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, o
     </div>
   );
 }
+
 
 function CredField({ label, value, onCopy, copied, mono }: { label: string; value: string; onCopy: () => void; copied: boolean; mono?: boolean }) {
   return (
@@ -519,3 +587,132 @@ function EditChannelDialog({ channel, onSaved, onClose }: {
     </DialogContent>
   );
 }
+
+function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; disabled: boolean; onConnected: () => void }) {
+  const metaAppId = import.meta.env.VITE_META_APP_ID as string | undefined;
+  const metaConfigId = import.meta.env.VITE_META_WA_CONFIG_ID as string | undefined;
+  const [loading, setLoading] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+
+  const startEmbeddedSignup = () => {
+    if (!metaAppId || !metaConfigId) {
+      setShowHelp(true);
+      return;
+    }
+    setLoading(true);
+    // Load Facebook SDK on demand
+    const initFB = () => {
+      const w = window as any;
+      w.FB.init({ appId: metaAppId, autoLogAppEvents: true, xfbml: true, version: "v20.0" });
+      w.FB.login(
+        async (response: any) => {
+          setLoading(false);
+          if (response.authResponse?.code) {
+            // Send the auth code + selected WABA/phone info to backend to exchange for permanent token
+            const { data: sess } = await supabase.auth.getSession();
+            const token = sess.session?.access_token;
+            const res = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-embedded-signup`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({
+                  organization_id: orgId,
+                  code: response.authResponse.code,
+                  data: response.authResponse,
+                }),
+              },
+            );
+            const out = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              toast.error(out?.error ?? "No se pudo completar la conexión");
+            } else {
+              toast.success("WhatsApp conectado vía Meta");
+              onConnected();
+            }
+          } else {
+            toast.info("Conexión cancelada");
+          }
+        },
+        {
+          config_id: metaConfigId,
+          response_type: "code",
+          override_default_response_type: true,
+          extras: { setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3" },
+        },
+      );
+    };
+    if ((window as any).FB) return initFB();
+    const s = document.createElement("script");
+    s.src = "https://connect.facebook.net/en_US/sdk.js";
+    s.async = true;
+    s.defer = true;
+    s.crossOrigin = "anonymous";
+    s.onload = initFB;
+    s.onerror = () => { setLoading(false); toast.error("No se pudo cargar el SDK de Meta"); };
+    document.body.appendChild(s);
+  };
+
+  const ready = !!metaAppId && !!metaConfigId;
+
+  return (
+    <div className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-5">
+      <div className="flex items-start gap-4 flex-wrap">
+        <div className="grid h-11 w-11 place-items-center rounded-xl bg-[#1877F2]/15">
+          <Facebook className="h-5 w-5 text-[#1877F2]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-display font-semibold flex items-center gap-2">
+            Conectar con Meta (Embedded Signup)
+            {ready ? (
+              <span className="text-xs rounded-full px-2 py-0.5 bg-emerald-500/15 text-emerald-400">Disponible</span>
+            ) : (
+              <span className="text-xs rounded-full px-2 py-0.5 bg-amber-500/15 text-amber-400">Pendiente de configuración</span>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+            Inicia sesión con Facebook y elige el portafolio de negocio (Business Manager), la cuenta de WhatsApp Business (WABA) y los números a conectar. Igual que Kommo o Attio: un solo flujo, sin pegar tokens.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button onClick={startEmbeddedSignup} disabled={disabled || loading}>
+            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Facebook className="h-4 w-4 mr-2" />}
+            {ready ? "Conectar con Meta" : "Cómo activarlo"}
+          </Button>
+        </div>
+      </div>
+
+      <Dialog open={showHelp} onOpenChange={setShowHelp}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Activar el flujo nativo de Meta</DialogTitle>
+            <DialogDescription>
+              Para usar Embedded Signup necesitas una app propia en Meta Developers (no hay forma de saltarse este paso).
+            </DialogDescription>
+          </DialogHeader>
+          <ol className="text-sm space-y-3 list-decimal pl-5">
+            <li>
+              Crea una app de tipo <strong>Business</strong> en{" "}
+              <a className="text-primary inline-flex items-center gap-1" href="https://developers.facebook.com/apps" target="_blank" rel="noreferrer">
+                developers.facebook.com <ExternalLink className="h-3 w-3" />
+              </a>
+              y verifica tu negocio.
+            </li>
+            <li>Solicita el caso de uso <strong>WhatsApp Business Platform</strong> con permisos <code>whatsapp_business_management</code>, <code>whatsapp_business_messaging</code> y <code>business_management</code>.</li>
+            <li>Crea una <strong>configuration</strong> de Embedded Signup en el panel de WhatsApp y copia el <code>config_id</code>.</li>
+            <li>Añade dos variables al proyecto: <code>VITE_META_APP_ID</code> y <code>VITE_META_WA_CONFIG_ID</code>. Cuando estén configuradas este botón abre el popup oficial de Meta y conecta las cuentas automáticamente.</li>
+          </ol>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowHelp(false)}>Entendido</Button>
+            <Button asChild>
+              <a href="https://developers.facebook.com/docs/whatsapp/embedded-signup" target="_blank" rel="noreferrer">
+                Documentación oficial <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
+              </a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
