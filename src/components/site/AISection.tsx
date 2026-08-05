@@ -1,60 +1,59 @@
 import { motion } from "framer-motion";
 import { Bot, Sparkles, Zap, Brain } from "lucide-react";
 
+const capabilities = [
+  { icon: Brain, title: "Análisis de leads" },
+  { icon: Sparkles, title: "Generación de mensajes" },
+  { icon: Zap, title: "Sugerencias de cierre" },
+  { icon: Bot, title: "Respuesta automática" },
+];
+
 export function AISection() {
   return (
-    <section id="ai" className="py-32 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-hero opacity-50 pointer-events-none" />
-      <div className="relative mx-auto max-w-6xl px-6 grid gap-12 lg:grid-cols-2 items-center">
+    <section id="ai" className="mx-auto max-w-[1280px] px-6 py-32">
+      <div className="grid gap-16 lg:grid-cols-2 lg:gap-24">
         <div>
-          <div className="text-xs uppercase tracking-widest" style={{ color: "var(--ai)" }}>Inteligencia Artificial</div>
-          <h2 className="mt-3 font-display text-4xl md:text-5xl font-semibold">
-            <span className="text-gradient-ai">IA que vende</span> por ti, 24/7.
+          <div className="eyebrow text-spark">Inteligencia artificial</div>
+          <h2 className="mt-6 display-lg">
+            IA que vende
+            <br />
+            por ti, 24/7.
           </h2>
-          <p className="mt-4 text-muted-foreground">
-            AUREN AI analiza cada conversación, clasifica leads, genera respuestas y sugiere el próximo paso para cerrar.
-            Tu equipo se enfoca en lo importante, la IA se encarga del resto.
+          <p className="mt-8 max-w-lg text-lg font-extralight leading-relaxed text-silver">
+            AUREN AI analiza cada conversación, clasifica leads, genera respuestas y sugiere el
+            próximo paso para cerrar. Tu equipo se enfoca en lo importante; la IA se encarga del resto.
           </p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {[
-              { icon: Brain, title: "Análisis de leads" },
-              { icon: Sparkles, title: "Generación de mensajes" },
-              { icon: Zap, title: "Sugerencias de cierre" },
-              { icon: Bot, title: "Respuesta automática" },
-            ].map((i) => (
-              <div key={i.title} className="flex items-center gap-3 rounded-xl glass px-4 py-3">
-                <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-ai glow-ai">
-                  <i.icon className="h-4 w-4" style={{ color: "var(--ai-foreground)" }} />
-                </div>
-                <span className="text-sm font-medium">{i.title}</span>
+          <div className="mt-12 grid gap-x-10 gap-y-6 sm:grid-cols-2">
+            {capabilities.map((c) => (
+              <div key={c.title} className="flex items-center gap-3">
+                <c.icon className="h-4 w-4 text-primary" strokeWidth={1.25} />
+                <span className="text-[15px] font-light text-silver">{c.title}</span>
               </div>
             ))}
           </div>
         </div>
 
         <motion.div
-          initial={{ opacity: 0, x: 30 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          className="rounded-2xl glass-strong p-6 shadow-elevated"
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="space-y-5 lg:pt-20"
         >
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            AUREN AI · Asistente activo
+          <div className="flex items-center gap-2 text-[12px] uppercase tracking-[0.14em] text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            Auren · Asistente activo
           </div>
-          <div className="mt-5 space-y-3">
-            <div className="rounded-xl bg-surface px-4 py-3 text-sm border border-border/60">
-              Cliente: Hola, quiero saber sobre el plan Pro
-            </div>
-            <div className="rounded-xl bg-gradient-ai px-4 py-3 text-sm" style={{ color: "var(--ai-foreground)" }}>
-              ¡Hola! El plan Pro incluye automatizaciones ilimitadas, IA avanzada y omnicanal. ¿Te gustaría una demo personalizada?
-            </div>
-            <div className="rounded-xl glass px-4 py-3 text-xs text-muted-foreground">
-              <Sparkles className="inline h-3 w-3 mr-1.5" style={{ color: "var(--ai)" }} />
-              Sugerencia IA: Lead caliente · Probabilidad de cierre 87%
-            </div>
-          </div>
+          <p className="text-[24px] font-extralight leading-snug tracking-[-0.02em] text-silver">
+            “Hola, quiero saber sobre el plan Pro.”
+          </p>
+          <p className="text-[27px] font-normal leading-snug tracking-[-0.03em]">
+            El plan Pro incluye automatizaciones ilimitadas, IA avanzada y omnicanal.
+            ¿Te gustaría una demo personalizada?
+          </p>
+          <p className="text-[15px] font-light text-spark">
+            Sugerencia IA · Lead caliente · Probabilidad de cierre 87%
+          </p>
         </motion.div>
       </div>
     </section>
