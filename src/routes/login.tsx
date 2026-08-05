@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
     redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),
   component: LoginPage,
@@ -113,7 +113,7 @@ function LoginPage() {
           </form>
           <p className="mt-6 text-sm text-muted-foreground text-center">
             ¿No tienes cuenta?{" "}
-            <Link to="/register" search={redirect ? { redirect } : undefined} className="text-foreground hover:text-primary">Regístrate</Link>
+            <Link to="/register" search={{ redirect }} className="text-foreground hover:text-primary">Regístrate</Link>
           </p>
         </div>
       </div>
