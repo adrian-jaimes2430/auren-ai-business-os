@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/register")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
     redirect: typeof search.redirect === "string" ? search.redirect : undefined,
   }),
   component: RegisterPage,
@@ -53,7 +53,7 @@ function RegisterPage() {
         navigate({ to: getSafeRedirect(redirect) ?? "/app" });
       } else {
         toast.success("Cuenta creada. Revisa tu email para confirmar.");
-        navigate({ to: "/login", search: redirect ? { redirect } : undefined });
+        navigate({ to: "/login", search: { redirect } });
       }
     } catch (err: any) {
       toast.error(err.message ?? "No se pudo crear la cuenta");
@@ -87,7 +87,7 @@ function RegisterPage() {
             </Button>
           </form>
           <p className="mt-6 text-sm text-muted-foreground text-center">
-            ¿Ya tienes cuenta? <Link to="/login" search={redirect ? { redirect } : undefined} className="text-foreground hover:text-primary">Entra</Link>
+            ¿Ya tienes cuenta? <Link to="/login" search={{ redirect }} className="text-foreground hover:text-primary">Entra</Link>
           </p>
         </div>
       </div>

@@ -34,9 +34,11 @@
   --color-ai: var(--ai);
   --color-ai-foreground: var(--ai-foreground);
   --color-surface: var(--surface);
+  --color-spark: var(--spark);
+  --color-silver: var(--silver);
   --color-surface-elevated: var(--surface-elevated);
 
-  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-display: "Inter", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
 
   --shadow-glow: 0 0 60px -10px oklch(0.55 0.22 25 / 0.45);
@@ -48,11 +50,13 @@
 :root {
   --radius: 0.75rem;
 
-  --background: oklch(0.13 0.01 270);
+  --background: oklch(0 0 0);
+  --spark: oklch(0.83 0.16 82);
+  --silver: oklch(0.82 0 0);
   --foreground: oklch(0.97 0.005 270);
 
-  --surface: oklch(0.17 0.012 270);
-  --surface-elevated: oklch(0.21 0.014 270);
+  --surface: oklch(0.11 0.008 270);
+  --surface-elevated: oklch(0.15 0.01 270);
 
   --card: oklch(0.17 0.012 270);
   --card-foreground: oklch(0.97 0.005 270);
@@ -104,15 +108,33 @@
   }
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
 
-  body {
-    background-image:
-      radial-gradient(ellipse 80% 60% at 50% -10%, oklch(0.62 0.23 25 / 0.12), transparent 60%),
-      radial-gradient(ellipse 60% 50% at 90% 110%, oklch(0.68 0.2 250 / 0.1), transparent 60%);
-    background-attachment: fixed;
-  }
+  body { background-color: #000; }
 }
 
 @layer utilities {
+  .display-xl {
+    font-weight: 400;
+    font-size: clamp(2.6rem, 7vw, 7.05rem);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+  }
+  .display-lg {
+    font-weight: 400;
+    font-size: clamp(2.1rem, 5vw, 4.875rem);
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+  }
+  .display-md {
+    font-weight: 400;
+    font-size: clamp(1.65rem, 3vw, 2.625rem);
+    line-height: 1.15;
+    letter-spacing: -0.035em;
+  }
+  .eyebrow {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
   .glass {
     background: color-mix(in oklab, var(--surface) 60%, transparent);
     backdrop-filter: blur(20px) saturate(160%);
