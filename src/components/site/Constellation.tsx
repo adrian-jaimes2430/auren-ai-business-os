@@ -34,7 +34,7 @@ function buildCloud(count: number): P[] {
 
     // folded surface bias: keep points nearer the shell for a wireframe feel
     const shell = Math.hypot(x - lobe * 0.34, y, z);
-    if (shell < 0.28 && Math.random() < 0.72) continue;
+    if (shell < 0.34 && Math.random() < 0.88) continue;
 
     // gentle gyri wobble
     const w = Math.sin(y * 9 + z * 7) * 0.045;
@@ -51,8 +51,8 @@ function buildCloud(count: number): P[] {
     });
   }
   // ambient scattered field
-  for (let i = 0; i < Math.round(count * 0.22); i++) {
-    const x = (Math.random() * 2 - 1) * 2.5;
+  for (let i = 0; i < Math.round(count * 0.1); i++) {
+    const x = (Math.random() * 2 - 1) * 1.7;
     const y = (Math.random() * 2 - 1) * 1.5;
     const z = (Math.random() * 2 - 1) * 1.2;
     pts.push({
@@ -126,7 +126,7 @@ export function Constellation({ className = "" }: { className?: string }) {
       const cx = w / 2;
       const cy = h / 2 - scroll * h * 0.18;
       const base = Math.min(w, h);
-      const zoom = base * (0.52 + scroll * 0.1);
+      const zoom = base * (0.42 + scroll * 0.08);
 
       const ry = time * (reduce ? 0 : 0.12) + mx * 0.9 + scroll * 0.6;
       const rx = -my * 0.55 + Math.sin(time * 0.25) * 0.06;

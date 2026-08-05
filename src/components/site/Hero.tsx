@@ -6,7 +6,13 @@ import { Constellation } from "./Constellation";
 export function Hero() {
   return (
     <section className="relative min-h-[92vh] overflow-hidden pt-40 pb-24">
-      <div className="absolute inset-0">
+      <div
+        className="absolute right-0 top-0 h-full w-full lg:w-[62%]"
+        style={{
+          maskImage: "radial-gradient(ellipse 70% 70% at 60% 45%, #000 45%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 70% 70% at 60% 45%, #000 45%, transparent 100%)",
+        }}
+      >
         <Constellation />
       </div>
       <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-background to-transparent pointer-events-none" />
