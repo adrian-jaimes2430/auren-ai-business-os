@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useAuth } from "@/hooks/use-auth";
-import { useOrganization } from "@/hooks/use-organization";
+import { OrganizationProvider, useOrganization } from "@/hooks/use-organization";
 import { OrgOnboarding } from "@/components/app/OrgOnboarding";
 import { PendingInvitations } from "@/components/app/PendingInvitations";
 import { AurenLogo } from "@/components/brand/AurenLogo";
@@ -18,7 +18,9 @@ export const Route = createFileRoute("/app")({
 function AppLayoutWrapper() {
   return (
     <AuthGuard>
-      <AppGate />
+      <OrganizationProvider>
+        <AppGate />
+      </OrganizationProvider>
     </AuthGuard>
   );
 }

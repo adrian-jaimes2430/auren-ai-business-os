@@ -107,6 +107,7 @@ export function useOrganization(): OrganizationState {
   const ctx = useContext(OrganizationContext);
   // Fallback for screens rendered outside the /app layout (e.g. invitations).
   if (ctx) return ctx;
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- branch is stable per component
   return useOrganizationState();
 }
 
