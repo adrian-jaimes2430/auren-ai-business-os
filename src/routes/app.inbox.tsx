@@ -28,6 +28,13 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
+function relativeTime(value: string | null | undefined) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return formatDistanceToNow(d, { addSuffix: false, locale: es });
+}
+
 export const Route = createFileRoute("/app/inbox")({ component: InboxPage });
 
 type Conversation = Database["public"]["Tables"]["conversations"]["Row"];
