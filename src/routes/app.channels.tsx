@@ -780,6 +780,11 @@ function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; di
             {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Facebook className="h-4 w-4 mr-2" />}
             {ready ? "Conectar con Meta" : "Cómo activarlo"}
           </Button>
+          {ready && (
+            <Button variant="outline" onClick={redirectFlow} disabled={disabled}>
+              Abrir en Meta <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
+            </Button>
+          )}
         </div>
       </div>
 
