@@ -589,8 +589,8 @@ function EditChannelDialog({ channel, onSaved, onClose }: {
 }
 
 function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; disabled: boolean; onConnected: () => void }) {
-  const metaAppId = import.meta.env.VITE_META_APP_ID as string | undefined;
-  const metaConfigId = import.meta.env.VITE_META_WA_CONFIG_ID as string | undefined;
+  const metaAppId = META_APP_ID;
+  const metaConfigId = META_WA_CONFIG_ID;
   const [loading, setLoading] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
