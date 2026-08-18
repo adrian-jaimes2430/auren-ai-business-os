@@ -1,4 +1,13 @@
-import { useEffect, useState, useCallback } from "react";
+import {
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  type ReactNode,
+} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import type { Database } from "@/integrations/supabase/types";
@@ -11,7 +20,18 @@ export type Membership = {
   role: OrgRole;
 };
 
-export function useOrganization() {
+export type OrganizationState = {
+  loading: boolean;
+  memberships: Membership[];
+  currentOrg: Organization | null;
+  currentRole: OrgRole | null;
+  switchOrg: (id: string) => void;
+  refresh: () => Promise<void>;
+};
+
+const OrganizationContext = createContext<OrganizationState | null>(null);
+
+function useOrganizationState(): OrganizationState {
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [memberships, setMemberships] = useState<Membership[]>([]);
@@ -23,7 +43,6 @@ export function useOrganization() {
       setLoading(false);
       return;
     }
-    setLoading(true);
     const { data, error } = await supabase
       .from("organization_members")
       .select("role, organization:organizations(*)")
@@ -37,32 +56,59 @@ export function useOrganization() {
         .filter((m) => m.organization)
         .map((m) => ({ organization: m.organization as Organization, role: m.role as OrgRole }));
       setMemberships(items);
-      const stored = typeof window !== "undefined" ? localStorage.getItem("auren.currentOrgId") : null;
-      const nextId = items.find((m) => m.organization.id === stored)?.organization.id ?? items[0]?.organization.id ?? null;
-      setCurrentOrgId(nextId);
+      setCurrentOrgId((prev) => {
+        if (prev && items.some((m) => m.organization.id === prev)) return prev;
+        const stored = typeof window !== "undefined" ? localStorage.getItem("auren.currentOrgId") : null;
+        return (
+          items.find((m) => m.organization.id === stored)?.organization.id ??
+          items[0]?.organization.id ??
+          null
+        );
+      });
     }
     setLoading(false);
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
-    if (!authLoading) load();
+    if (!authLoading) void load();
   }, [authLoading, load]);
 
-  const switchOrg = (id: string) => {
+  const switchOrg = useCallback((id: string) => {
     setCurrentOrgId(id);
     if (typeof window !== "undefined") localStorage.setItem("auren.currentOrgId", id);
-  };
+  }, []);
 
   const currentMembership = memberships.find((m) => m.organization.id === currentOrgId) ?? null;
 
-  return {
-    loading: authLoading || loading,
-    memberships,
-    currentOrg: currentMembership?.organization ?? null,
-    currentRole: currentMembership?.role ?? null,
-    switchOrg,
-    refresh: load,
-  };
+  return useMemo(
+    () => ({
+      loading: authLoading || loading,
+      memberships,
+      currentOrg: currentMembership?.organization ?? null,
+      currentRole: currentMembership?.role ?? null,
+      switchOrg,
+      refresh: load,
+    }),
+    [authLoading, loading, memberships, currentMembership, switchOrg, load],
+  );
+}
+
+/**
+ * Single source of truth for the active workspace. Mounted once in /app so that
+ * navigating between screens never refetches memberships (that caused the whole
+ * screen to reset back to a loading state on every route change).
+ */
+export function OrganizationProvider({ children }: { children: ReactNode }) {
+  const value = useOrganizationState();
+  return createElement(OrganizationContext.Provider, { value }, children);
+}
+
+export function useOrganization(): OrganizationState {
+  const ctx = useContext(OrganizationContext);
+  // Fallback for screens rendered outside the /app layout (e.g. invitations).
+  if (ctx) return ctx;
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- branch is stable per component
+  return useOrganizationState();
 }
 
 export async function createOrganizationWithDefaults(input: {

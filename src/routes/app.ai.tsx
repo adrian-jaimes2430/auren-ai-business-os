@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/app/ai")({ component: AiPage });
 
@@ -23,12 +24,23 @@ const SUGGESTIONS = [
   { title: "Resumen de pipeline", prompt: "Tengo 12 negocios abiertos: 4 en propuesta, 5 en contactado, 3 en calificado. ¿Qué acciones priorizo esta semana?" },
 ];
 
+const SKILLS = [
+  { id: "marketing", label: "Marketing" },
+  { id: "campaigns", label: "Campañas" },
+  { id: "sales", label: "Ventas" },
+  { id: "conversion", label: "Conversión" },
+  { id: "prospecting", label: "Prospección" },
+] as const;
+
+type SkillId = (typeof SKILLS)[number]["id"];
+
 function AiPage() {
   const { user } = useAuth();
   const { currentOrg } = useOrganization();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [skill, setSkill] = useState<SkillId>("sales");
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -69,6 +81,9 @@ function AiPage() {
     const controller = new AbortController();
     abortRef.current = controller;
 
+    const { data: sess } = await supabase.auth.getSession();
+    const accessToken = sess.session?.access_token;
+
     let assistant = "";
     const upsert = (chunk: string) => {
       assistant += chunk;
@@ -87,9 +102,13 @@ function AiPage() {
         signal: controller.signal,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({
+          messages: next,
+          skill,
+          organization_id: currentOrg?.id ?? null,
+        }),
       });
 
       if (!resp.ok || !resp.body) {
@@ -166,6 +185,26 @@ function AiPage() {
           </Button>
         </div>
       </header>
+
+      <div className="px-6 py-3 border-b border-border/60 flex flex-wrap items-center gap-2">
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground mr-1">Skill</span>
+        {SKILLS.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setSkill(s.id)}
+            className={`rounded-full px-3 py-1 text-xs transition-colors ${
+              skill === s.id
+                ? "bg-gradient-primary text-primary-foreground"
+                : "bg-surface text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+        <span className="text-[10px] text-muted-foreground ml-auto">
+          Contexto de marca activo: knowledge, conversaciones, pipeline y campañas
+        </span>
+      </div>
 
       <div ref={scrollRef} className="flex-1 overflow-auto">
         <div className="mx-auto max-w-3xl px-6 py-8">
