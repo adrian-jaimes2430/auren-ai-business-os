@@ -104,6 +104,8 @@ function ChannelsPage() {
 
       </div>
 
+      <MetaAppUrls baseUrl={baseUrl} />
+
       {/* Provider catalog */}
       <div className="mt-8">
         <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Conectar nuevo canal</div>
@@ -339,6 +341,48 @@ function ChannelCard({ channel, baseUrl, orgId, canManage, onToggle, onRemove, o
   );
 }
 
+
+function MetaAppUrls({ baseUrl }: { baseUrl: string }) {
+  const [copied, setCopied] = useState<string | null>(null);
+  const origin = baseUrl || "https://aurenos.app";
+  const rows: { label: string; value: string; hint: string }[] = [
+    { label: "Dominio del sitio / Dominios permitidos SDK", value: origin.replace(/^https?:\/\//, ""), hint: "Configuración básica → Dominios de la app y SDK para JavaScript" },
+    { label: "URL del sitio web", value: `${origin}/`, hint: "Productos → Facebook Login → Configuración" },
+    { label: "URI de redireccionamiento de OAuth válidos", value: `${origin}/app/channels`, hint: "Añade también https://aurenos.app/app/channels y www.aurenos.app/app/channels" },
+    { label: "URL de devolución de autorización cancelada", value: `${origin}/api/public/meta/deauthorize`, hint: "Deauthorize callback URL" },
+    { label: "URL de solicitud de eliminación de datos", value: `${origin}/api/public/meta/data-deletion`, hint: "Data deletion request URL" },
+    { label: "Webhook (WhatsApp/Instagram)", value: `${origin}/api/public/webhooks/whatsapp/{orgId}/{channelId}`, hint: "La URL exacta aparece en cada canal creado" },
+    { label: "Política de privacidad", value: `${origin}/privacy`, hint: "Uso de datos" },
+    { label: "Términos del servicio", value: `${origin}/terms`, hint: "Uso de datos" },
+  ];
+  return (
+    <div className="mt-8 rounded-2xl border border-border/60 bg-surface p-5">
+      <div className="text-sm font-medium">URLs para tu app de Meta (Facebook Developers)</div>
+      <p className="text-xs text-muted-foreground mt-1">
+        Copia estos valores en la configuración de la app. Activa "Inicio de sesión de OAuth web",
+        "Aplicar HTTPS" y "Usar modo estricto para URI de redireccionamiento".
+      </p>
+      <div className="mt-4 space-y-3">
+        {rows.map((r) => (
+          <div key={r.label}>
+            <CredField
+              label={r.label}
+              value={r.value}
+              mono
+              copied={copied === r.label}
+              onCopy={() => {
+                navigator.clipboard.writeText(r.value);
+                setCopied(r.label);
+                setTimeout(() => setCopied(null), 1500);
+              }}
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">{r.hint}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function CredField({ label, value, onCopy, copied, mono }: { label: string; value: string; onCopy: () => void; copied: boolean; mono?: boolean }) {
   return (
