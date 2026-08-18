@@ -267,8 +267,11 @@ export type Database = {
           id: string
           is_active: boolean
           last_event_at: string | null
+          meta_ad_account_id: string | null
           meta_app_id: string | null
           meta_business_id: string | null
+          meta_ig_user_id: string | null
+          meta_page_id: string | null
           meta_waba_id: string | null
           name: string
           organization_id: string
@@ -287,8 +290,11 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_event_at?: string | null
+          meta_ad_account_id?: string | null
           meta_app_id?: string | null
           meta_business_id?: string | null
+          meta_ig_user_id?: string | null
+          meta_page_id?: string | null
           meta_waba_id?: string | null
           name: string
           organization_id: string
@@ -307,8 +313,11 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_event_at?: string | null
+          meta_ad_account_id?: string | null
           meta_app_id?: string | null
           meta_business_id?: string | null
+          meta_ig_user_id?: string | null
+          meta_page_id?: string | null
           meta_waba_id?: string | null
           name?: string
           organization_id?: string
