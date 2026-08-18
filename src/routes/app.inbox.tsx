@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bot, Loader2, Plus, Send, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,9 +49,9 @@ function InboxPage() {
   const [sending, setSending] = useState(false);
   const [openNew, setOpenNew] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const reloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  async function loadConversations(orgId: string) {
-    setLoading(true);
+  const loadConversations = useCallback(async (orgId: string) => {
     const { data: convs } = await supabase
       .from("conversations")
       .select("*")
@@ -69,9 +69,9 @@ function InboxPage() {
     } else {
       setContacts({});
     }
-    if (!activeId && list[0]) setActiveId(list[0].id);
+    setActiveId((prev) => prev ?? list[0]?.id ?? null);
     setLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
     if (currentOrg) loadConversations(currentOrg.id);
@@ -85,7 +85,10 @@ function InboxPage() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "conversations", filter: `organization_id=eq.${currentOrg.id}` },
-        () => loadConversations(currentOrg.id),
+        () => {
+          if (reloadTimer.current) clearTimeout(reloadTimer.current);
+          reloadTimer.current = setTimeout(() => loadConversations(currentOrg.id), 400);
+        },
       )
       .subscribe();
     return () => {
@@ -249,7 +252,7 @@ function InboxPage() {
     }
   }
 
-  if (orgLoading || loading) {
+  if ((orgLoading || loading) && conversations.length === 0) {
     return (
       <div className="p-8 flex items-center gap-2 text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" /> Cargando inbox...
@@ -297,7 +300,7 @@ function InboxPage() {
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-sm truncate">{name}</span>
                   <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                    {formatDistanceToNow(new Date(time), { addSuffix: false, locale: es })}
+                    {relativeTime(time)}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1 truncate">
