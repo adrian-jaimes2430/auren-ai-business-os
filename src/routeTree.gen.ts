@@ -36,6 +36,7 @@ import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
 import { Route as AppAiRouteImport } from './routes/app.ai'
 import { Route as AppAcademyRouteImport } from './routes/app.academy'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicMetaDeauthorizeRouteImport } from './routes/api/public/meta/deauthorize'
 import { Route as ApiPublicWebhooksWhatsappOrgIdChannelIdRouteImport } from './routes/api/public/webhooks/whatsapp/$orgId/$channelId'
 
 const TermsRoute = TermsRouteImport.update({
@@ -174,6 +175,12 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicMetaDeauthorizeRoute =
+  ApiPublicMetaDeauthorizeRouteImport.update({
+    id: '/api/public/meta/deauthorize',
+    path: '/api/public/meta/deauthorize',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebhooksWhatsappOrgIdChannelIdRoute =
   ApiPublicWebhooksWhatsappOrgIdChannelIdRouteImport.update({
     id: '/api/public/webhooks/whatsapp/$orgId/$channelId',
@@ -208,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/webhooks/whatsapp/$orgId/$channelId': typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
@@ -237,6 +245,7 @@ export interface FileRoutesByTo {
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app': typeof AppIndexRoute
+  '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/webhooks/whatsapp/$orgId/$channelId': typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
@@ -268,6 +277,7 @@ export interface FileRoutesById {
   '/app/team': typeof AppTeamRoute
   '/invite/$token': typeof InviteTokenRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/webhooks/whatsapp/$orgId/$channelId': typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/invite/$token'
     | '/app/'
+    | '/api/public/meta/deauthorize'
     | '/api/public/payments/webhook'
     | '/api/public/webhooks/whatsapp/$orgId/$channelId'
   fileRoutesByTo: FileRoutesByTo
@@ -329,6 +340,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/invite/$token'
     | '/app'
+    | '/api/public/meta/deauthorize'
     | '/api/public/payments/webhook'
     | '/api/public/webhooks/whatsapp/$orgId/$channelId'
   id:
@@ -359,6 +371,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/invite/$token'
     | '/app/'
+    | '/api/public/meta/deauthorize'
     | '/api/public/payments/webhook'
     | '/api/public/webhooks/whatsapp/$orgId/$channelId'
   fileRoutesById: FileRoutesById
@@ -376,6 +389,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  ApiPublicMetaDeauthorizeRoute: typeof ApiPublicMetaDeauthorizeRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   ApiPublicWebhooksWhatsappOrgIdChannelIdRoute: typeof ApiPublicWebhooksWhatsappOrgIdChannelIdRoute
 }
@@ -571,6 +585,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/meta/deauthorize': {
+      id: '/api/public/meta/deauthorize'
+      path: '/api/public/meta/deauthorize'
+      fullPath: '/api/public/meta/deauthorize'
+      preLoaderRoute: typeof ApiPublicMetaDeauthorizeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/whatsapp/$orgId/$channelId': {
       id: '/api/public/webhooks/whatsapp/$orgId/$channelId'
       path: '/api/public/webhooks/whatsapp/$orgId/$channelId'
@@ -630,6 +651,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
   InviteTokenRoute: InviteTokenRoute,
+  ApiPublicMetaDeauthorizeRoute: ApiPublicMetaDeauthorizeRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   ApiPublicWebhooksWhatsappOrgIdChannelIdRoute:
     ApiPublicWebhooksWhatsappOrgIdChannelIdRoute,
