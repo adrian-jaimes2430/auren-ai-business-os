@@ -44,7 +44,7 @@ Deno.serve(async (req: Request) => {
     const { data: userData, error: userErr } = await userClient.auth.getUser();
     if (userErr || !userData.user) return json(401, { error: "No autenticado" });
 
-    const { organization_id, code } = await req.json();
+    const { organization_id, code, waba_id, phone_number_id } = await req.json();
     if (!organization_id || !code) return json(400, { error: "Faltan parámetros" });
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -76,27 +76,50 @@ Deno.serve(async (req: Request) => {
     );
     const debugJson = await debugRes.json();
     const granular = debugJson?.data?.granular_scopes ?? [];
-    const wabaIds: string[] = [
+    const discoveredWabaIds: string[] = [
       ...new Set(
         granular
           .filter((g: any) => g.scope === "whatsapp_business_management" || g.scope === "whatsapp_business_messaging")
           .flatMap((g: any) => g.target_ids ?? []),
       ),
     ];
+    const wabaIds = [...new Set([waba_id, ...discoveredWabaIds].filter(Boolean))] as string[];
+
+    if (wabaIds.length === 0) {
+      return json(422, {
+        error: "Meta autorizó la conexión, pero no informó ninguna cuenta de WhatsApp Business. Selecciona una WABA con al menos un número y vuelve a intentarlo.",
+      });
+    }
 
     const created: any[] = [];
     for (const wabaId of wabaIds) {
-      const phonesRes = await fetch(
-        `https://graph.facebook.com/v20.0/${wabaId}/phone_numbers?access_token=${accessToken}`,
-      );
+      const phonesRes = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/phone_numbers`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       const phonesJson = await phonesRes.json();
-      const phones = phonesJson?.data ?? [];
+      if (!phonesRes.ok) {
+        console.error("meta-embedded-signup phone discovery failed", phonesJson?.error?.message);
+        continue;
+      }
+      let phones = phonesJson?.data ?? [];
+      if (phone_number_id && !phones.some((phone: any) => phone.id === phone_number_id)) {
+        const phoneRes = await fetch(
+          `https://graph.facebook.com/v20.0/${phone_number_id}?fields=id,verified_name,display_phone_number,quality_rating`,
+          { headers: { Authorization: `Bearer ${accessToken}` } },
+        );
+        const selectedPhone = await phoneRes.json().catch(() => null);
+        if (phoneRes.ok && selectedPhone?.id) phones = [selectedPhone, ...phones];
+      }
       for (const phone of phones) {
         // Subscribe app to WABA (idempotent)
-        await fetch(
-          `https://graph.facebook.com/v20.0/${wabaId}/subscribed_apps?access_token=${accessToken}`,
-          { method: "POST" },
-        ).catch(() => null);
+        const subscribeRes = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/subscribed_apps`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }).catch(() => null);
+        if (subscribeRes && !subscribeRes.ok) {
+          const subscribeError = await subscribeRes.json().catch(() => ({}));
+          console.error("meta-embedded-signup subscription failed", subscribeError?.error?.message);
+        }
 
         // Upsert channel by external_id
         const { data: existing } = await admin
@@ -129,13 +152,21 @@ Deno.serve(async (req: Request) => {
         };
 
         if (existing) {
-          await admin.from("channels").update(payload).eq("id", existing.id);
+          const { error: updateError } = await admin.from("channels").update(payload).eq("id", existing.id);
+          if (updateError) throw updateError;
           created.push({ id: existing.id, ...payload });
         } else {
-          const { data: ins } = await admin.from("channels").insert(payload).select().single();
+          const { data: ins, error: insertError } = await admin.from("channels").insert(payload).select().single();
+          if (insertError) throw insertError;
           if (ins) created.push(ins);
         }
       }
+    }
+
+    if (created.length === 0) {
+      return json(422, {
+        error: "La autorización terminó, pero Meta no entregó un número utilizable. Verifica que el número esté registrado en la WABA seleccionada y que la app tenga whatsapp_business_management.",
+      });
     }
 
     return json(200, { ok: true, channels: created, count: created.length });

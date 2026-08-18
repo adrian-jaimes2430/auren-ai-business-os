@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Plus, Radio, MessageCircle, Instagram, Mail, Phone, MessageSquare, Globe, Copy, Check,
   Trash2, Power, PowerOff, Loader2, Sparkles, Send, Settings, ShieldCheck, ShieldAlert, ShieldQuestion, Facebook, ExternalLink,
@@ -69,16 +69,16 @@ function ChannelsPage() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     if (!code) return;
-    params.delete("code");
-    params.delete("state");
-    const clean = window.location.pathname + (params.toString() ? `?${params}` : "");
-    window.history.replaceState({}, "", clean);
     (async () => {
       const t = toast.loading("Finalizando conexión con Meta…");
       try {
         const out = await exchangeMetaCode(currentOrg.id, code);
+        params.delete("code");
+        params.delete("state");
+        const clean = window.location.pathname + (params.toString() ? `?${params}` : "");
+        window.history.replaceState({}, "", clean);
         toast.success(`WhatsApp conectado (${out?.count ?? 0} número(s))`, { id: t });
-        load();
+        await load();
       } catch (e: any) {
         toast.error(e?.message ?? "No se pudo completar la conexión", { id: t });
       }
@@ -669,16 +669,27 @@ export function metaOnboardUrl() {
   );
 }
 
-export async function exchangeMetaCode(orgId: string, code: string) {
+type MetaSignupSelection = { wabaId?: string; phoneNumberId?: string };
+
+export async function exchangeMetaCode(orgId: string, code: string, selection: MetaSignupSelection = {}) {
   const { data: sess } = await supabase.auth.getSession();
   const token = sess.session?.access_token;
+  if (!token) throw new Error("Tu sesión venció. Inicia sesión e intenta conectar Meta nuevamente.");
   const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-embedded-signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ organization_id: orgId, code }),
+    body: JSON.stringify({
+      organization_id: orgId,
+      code,
+      waba_id: selection.wabaId,
+      phone_number_id: selection.phoneNumberId,
+    }),
   });
   const out = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(out?.error ?? "No se pudo completar la conexión");
+  if (!out?.count) {
+    throw new Error("Meta autorizó el acceso, pero no devolvió ningún número de WhatsApp. Confirma que seleccionaste una WABA con un número registrado.");
+  }
   return out;
 }
 
@@ -688,6 +699,7 @@ function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; di
   const [loading, setLoading] = useState(false);
   const [sdkReady, setSdkReady] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const signupSelection = useRef<MetaSignupSelection>({});
 
   // Preload the Facebook SDK so the popup opens inside the user's click gesture
   // (loading it after the click gets blocked by the browser → spinner forever).
@@ -720,7 +732,14 @@ function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; di
       if (!/facebook\.com$/.test(new URL(e.origin).hostname.replace(/^www\./, ""))) return;
       try {
         const d = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
-        if (d?.type === "WA_EMBEDDED_SIGNUP" && d?.event === "CANCEL") setLoading(false);
+        if (d?.type !== "WA_EMBEDDED_SIGNUP") return;
+        if (d.event === "FINISH") {
+          signupSelection.current = {
+            wabaId: d.data?.waba_id,
+            phoneNumberId: d.data?.phone_number_id,
+          };
+        }
+        if (d.event === "CANCEL" || d.event === "ERROR") setLoading(false);
       } catch { /* not our payload */ }
     };
     window.addEventListener("message", onMessage);
@@ -730,6 +749,7 @@ function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; di
   const redirectFlow = () => {
     // Full-page flow (works even if popups are blocked). Meta returns ?code=… to
     // the whitelisted redirect URI, which we exchange on load.
+    window.localStorage.setItem("auren.metaConnectingOrgId", orgId);
     window.location.href = metaOnboardUrl();
   };
 
@@ -742,6 +762,7 @@ function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; di
     if (!sdkReady || !w.FB) return redirectFlow();
 
     setLoading(true);
+    signupSelection.current = {};
     let settled = false;
     const finish = () => { settled = true; setLoading(false); };
     // Safety net: if the popup never resolves (blocked / closed silently), stop spinning.
@@ -754,7 +775,7 @@ function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; di
           const code = response?.authResponse?.code;
           if (!code) { finish(); toast.info("Conexión cancelada"); return; }
           try {
-            await exchangeMetaCode(orgId, code);
+            await exchangeMetaCode(orgId, code, signupSelection.current);
             toast.success("WhatsApp conectado vía Meta");
             onConnected();
           } catch (err: any) {
