@@ -371,7 +371,7 @@ function MetaAppUrls({ baseUrl }: { baseUrl: string }) {
   const rows: { label: string; value: string; hint: string }[] = [
     { label: "Dominio del sitio / Dominios permitidos SDK", value: origin.replace(/^https?:\/\//, ""), hint: "Configuración básica → Dominios de la app y SDK para JavaScript" },
     { label: "URL del sitio web", value: `${origin}/`, hint: "Productos → Facebook Login → Configuración" },
-    { label: "URI de redireccionamiento de OAuth válidos", value: `${origin}/app/channels`, hint: "Añade también https://aurenos.app/app/channels y www.aurenos.app/app/channels" },
+    { label: "URI de redireccionamiento de OAuth válidos", value: `https://www.aurenos.app/app/channels`, hint: "OBLIGATORIO exactamente así. Añade también https://aurenos.app/app/channels y la URL de preview si pruebas ahí." },
     { label: "URL de devolución de autorización cancelada", value: `${origin}/api/public/meta/deauthorize`, hint: "Deauthorize callback URL" },
     { label: "URL de solicitud de eliminación de datos", value: `${origin}/api/public/meta/data-deletion`, hint: "Data deletion request URL" },
     { label: "Webhook (WhatsApp/Instagram)", value: `${origin}/api/public/webhooks/whatsapp/{orgId}/{channelId}`, hint: "La URL exacta aparece en cada canal creado" },
