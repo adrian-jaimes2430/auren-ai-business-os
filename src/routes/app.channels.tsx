@@ -63,6 +63,29 @@ function ChannelsPage() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentOrg?.id]);
 
+  // Meta Embedded Signup (redirect flow) comes back as /app/channels?code=…
+  useEffect(() => {
+    if (!currentOrg || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (!code) return;
+    params.delete("code");
+    params.delete("state");
+    const clean = window.location.pathname + (params.toString() ? `?${params}` : "");
+    window.history.replaceState({}, "", clean);
+    (async () => {
+      const t = toast.loading("Finalizando conexión con Meta…");
+      try {
+        const out = await exchangeMetaCode(currentOrg.id, code);
+        toast.success(`WhatsApp conectado (${out?.count ?? 0} número(s))`, { id: t });
+        load();
+      } catch (e: any) {
+        toast.error(e?.message ?? "No se pudo completar la conexión", { id: t });
+      }
+    })();
+    // eslint-disable-next-line
+  }, [currentOrg?.id]);
+
   useEffect(() => {
     if (!currentOrg) return;
     const ch = supabase.channel(`channels-${currentOrg.id}`)
@@ -348,7 +371,7 @@ function MetaAppUrls({ baseUrl }: { baseUrl: string }) {
   const rows: { label: string; value: string; hint: string }[] = [
     { label: "Dominio del sitio / Dominios permitidos SDK", value: origin.replace(/^https?:\/\//, ""), hint: "Configuración básica → Dominios de la app y SDK para JavaScript" },
     { label: "URL del sitio web", value: `${origin}/`, hint: "Productos → Facebook Login → Configuración" },
-    { label: "URI de redireccionamiento de OAuth válidos", value: `${origin}/app/channels`, hint: "Añade también https://aurenos.app/app/channels y www.aurenos.app/app/channels" },
+    { label: "URI de redireccionamiento de OAuth válidos", value: `https://www.aurenos.app/app/channels`, hint: "OBLIGATORIO exactamente así. Añade también https://aurenos.app/app/channels y la URL de preview si pruebas ahí." },
     { label: "URL de devolución de autorización cancelada", value: `${origin}/api/public/meta/deauthorize`, hint: "Deauthorize callback URL" },
     { label: "URL de solicitud de eliminación de datos", value: `${origin}/api/public/meta/data-deletion`, hint: "Data deletion request URL" },
     { label: "Webhook (WhatsApp/Instagram)", value: `${origin}/api/public/webhooks/whatsapp/{orgId}/{channelId}`, hint: "La URL exacta aparece en cada canal creado" },
@@ -633,69 +656,125 @@ function EditChannelDialog({ channel, onSaved, onClose }: {
   );
 }
 
+export const META_REDIRECT_URI = "https://www.aurenos.app/app/channels";
+
+export function metaOnboardUrl() {
+  const extras = encodeURIComponent(
+    JSON.stringify({ version: "v4", sessionInfoVersion: "3", featureType: "whatsapp_business_app_onboarding" }),
+  );
+  return (
+    `https://business.facebook.com/messaging/whatsapp/onboard/?app_id=${META_APP_ID}` +
+    `&config_id=${META_WA_CONFIG_ID}&extras=${extras}` +
+    `&redirect_uri=${encodeURIComponent(META_REDIRECT_URI)}`
+  );
+}
+
+export async function exchangeMetaCode(orgId: string, code: string) {
+  const { data: sess } = await supabase.auth.getSession();
+  const token = sess.session?.access_token;
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-embedded-signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ organization_id: orgId, code }),
+  });
+  const out = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(out?.error ?? "No se pudo completar la conexión");
+  return out;
+}
+
 function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; disabled: boolean; onConnected: () => void }) {
   const metaAppId = META_APP_ID;
   const metaConfigId = META_WA_CONFIG_ID;
   const [loading, setLoading] = useState(false);
+  const [sdkReady, setSdkReady] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+
+  // Preload the Facebook SDK so the popup opens inside the user's click gesture
+  // (loading it after the click gets blocked by the browser → spinner forever).
+  useEffect(() => {
+    if (!metaAppId || !metaConfigId) return;
+    const w = window as any;
+    const init = () => {
+      try {
+        w.FB.init({ appId: metaAppId, autoLogAppEvents: true, xfbml: false, version: "v20.0" });
+        setSdkReady(true);
+      } catch { setSdkReady(false); }
+    };
+    if (w.FB) return init();
+    const existing = document.getElementById("facebook-jssdk") as HTMLScriptElement | null;
+    if (existing) { existing.addEventListener("load", init); return () => existing.removeEventListener("load", init); }
+    const s = document.createElement("script");
+    s.id = "facebook-jssdk";
+    s.src = "https://connect.facebook.net/en_US/sdk.js";
+    s.async = true;
+    s.defer = true;
+    s.crossOrigin = "anonymous";
+    s.onload = init;
+    document.body.appendChild(s);
+    // eslint-disable-next-line
+  }, [metaAppId, metaConfigId]);
+
+  // Meta posts the WABA/phone selection through window.postMessage
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if (!/facebook\.com$/.test(new URL(e.origin).hostname.replace(/^www\./, ""))) return;
+      try {
+        const d = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+        if (d?.type === "WA_EMBEDDED_SIGNUP" && d?.event === "CANCEL") setLoading(false);
+      } catch { /* not our payload */ }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
+
+  const redirectFlow = () => {
+    // Full-page flow (works even if popups are blocked). Meta returns ?code=… to
+    // the whitelisted redirect URI, which we exchange on load.
+    window.location.href = metaOnboardUrl();
+  };
 
   const startEmbeddedSignup = () => {
     if (!metaAppId || !metaConfigId) {
       setShowHelp(true);
       return;
     }
+    const w = window as any;
+    if (!sdkReady || !w.FB) return redirectFlow();
+
     setLoading(true);
-    // Load Facebook SDK on demand
-    const initFB = () => {
-      const w = window as any;
-      w.FB.init({ appId: metaAppId, autoLogAppEvents: true, xfbml: true, version: "v20.0" });
+    let settled = false;
+    const finish = () => { settled = true; setLoading(false); };
+    // Safety net: if the popup never resolves (blocked / closed silently), stop spinning.
+    const guard = window.setTimeout(() => { if (!settled) setLoading(false); }, 120000);
+
+    try {
       w.FB.login(
         async (response: any) => {
-          setLoading(false);
-          if (response.authResponse?.code) {
-            // Send the auth code + selected WABA/phone info to backend to exchange for permanent token
-            const { data: sess } = await supabase.auth.getSession();
-            const token = sess.session?.access_token;
-            const res = await fetch(
-              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-embedded-signup`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({
-                  organization_id: orgId,
-                  code: response.authResponse.code,
-                  data: response.authResponse,
-                }),
-              },
-            );
-            const out = await res.json().catch(() => ({}));
-            if (!res.ok) {
-              toast.error(out?.error ?? "No se pudo completar la conexión");
-            } else {
-              toast.success("WhatsApp conectado vía Meta");
-              onConnected();
-            }
-          } else {
-            toast.info("Conexión cancelada");
+          window.clearTimeout(guard);
+          const code = response?.authResponse?.code;
+          if (!code) { finish(); toast.info("Conexión cancelada"); return; }
+          try {
+            await exchangeMetaCode(orgId, code);
+            toast.success("WhatsApp conectado vía Meta");
+            onConnected();
+          } catch (err: any) {
+            toast.error(err?.message ?? "No se pudo completar la conexión");
+          } finally {
+            finish();
           }
         },
         {
           config_id: metaConfigId,
           response_type: "code",
           override_default_response_type: true,
-          extras: { setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3" },
+          extras: { setup: {}, featureType: "whatsapp_business_app_onboarding", sessionInfoVersion: "3", version: "v4" },
         },
       );
-    };
-    if ((window as any).FB) return initFB();
-    const s = document.createElement("script");
-    s.src = "https://connect.facebook.net/en_US/sdk.js";
-    s.async = true;
-    s.defer = true;
-    s.crossOrigin = "anonymous";
-    s.onload = initFB;
-    s.onerror = () => { setLoading(false); toast.error("No se pudo cargar el SDK de Meta"); };
-    document.body.appendChild(s);
+    } catch {
+      window.clearTimeout(guard);
+      finish();
+      redirectFlow();
+    }
   };
 
   const ready = !!metaAppId && !!metaConfigId;
@@ -724,6 +803,11 @@ function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; di
             {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Facebook className="h-4 w-4 mr-2" />}
             {ready ? "Conectar con Meta" : "Cómo activarlo"}
           </Button>
+          {ready && (
+            <Button variant="outline" onClick={redirectFlow} disabled={disabled}>
+              Abrir en Meta <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
+            </Button>
+          )}
         </div>
       </div>
 
