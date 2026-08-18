@@ -72,7 +72,9 @@ function ChannelsPage() {
     (async () => {
       const t = toast.loading("Finalizando conexión con Meta…");
       try {
-        const out = await exchangeMetaCode(currentOrg.id, code, { redirectUri: META_REDIRECT_URI });
+        const out = await exchangeMetaCode(currentOrg.id, code, {
+          redirectUri: `${window.location.origin}/app/channels`,
+        });
         params.delete("code");
         params.delete("state");
         const clean = window.location.pathname + (params.toString() ? `?${params}` : "");
@@ -658,14 +660,14 @@ function EditChannelDialog({ channel, onSaved, onClose }: {
 
 export const META_REDIRECT_URI = "https://www.aurenos.app/app/channels";
 
-export function metaOnboardUrl() {
+export function metaOnboardUrl(redirectUri = META_REDIRECT_URI) {
   const extras = encodeURIComponent(
     JSON.stringify({ version: "v4", sessionInfoVersion: "3", featureType: "whatsapp_business_app_onboarding" }),
   );
   return (
     `https://business.facebook.com/messaging/whatsapp/onboard/?app_id=${META_APP_ID}` +
     `&config_id=${META_WA_CONFIG_ID}&extras=${extras}` +
-    `&redirect_uri=${encodeURIComponent(META_REDIRECT_URI)}`
+    `&redirect_uri=${encodeURIComponent(redirectUri)}`
   );
 }
 
@@ -751,7 +753,7 @@ function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; di
     // Full-page flow (works even if popups are blocked). Meta returns ?code=… to
     // the whitelisted redirect URI, which we exchange on load.
     window.localStorage.setItem("auren.metaConnectingOrgId", orgId);
-    window.location.href = metaOnboardUrl();
+    window.location.assign(metaOnboardUrl(`${window.location.origin}/app/channels`));
   };
 
   const startEmbeddedSignup = () => {
