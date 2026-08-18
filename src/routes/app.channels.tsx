@@ -63,6 +63,29 @@ function ChannelsPage() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [currentOrg?.id]);
 
+  // Meta Embedded Signup (redirect flow) comes back as /app/channels?code=…
+  useEffect(() => {
+    if (!currentOrg || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (!code) return;
+    params.delete("code");
+    params.delete("state");
+    const clean = window.location.pathname + (params.toString() ? `?${params}` : "");
+    window.history.replaceState({}, "", clean);
+    (async () => {
+      const t = toast.loading("Finalizando conexión con Meta…");
+      try {
+        const out = await exchangeMetaCode(currentOrg.id, code);
+        toast.success(`WhatsApp conectado (${out?.count ?? 0} número(s))`, { id: t });
+        load();
+      } catch (e: any) {
+        toast.error(e?.message ?? "No se pudo completar la conexión", { id: t });
+      }
+    })();
+    // eslint-disable-next-line
+  }, [currentOrg?.id]);
+
   useEffect(() => {
     if (!currentOrg) return;
     const ch = supabase.channel(`channels-${currentOrg.id}`)
