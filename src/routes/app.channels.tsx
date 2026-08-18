@@ -72,7 +72,7 @@ function ChannelsPage() {
     (async () => {
       const t = toast.loading("Finalizando conexión con Meta…");
       try {
-        const out = await exchangeMetaCode(currentOrg.id, code);
+        const out = await exchangeMetaCode(currentOrg.id, code, { redirectUri: META_REDIRECT_URI });
         params.delete("code");
         params.delete("state");
         const clean = window.location.pathname + (params.toString() ? `?${params}` : "");
@@ -669,7 +669,7 @@ export function metaOnboardUrl() {
   );
 }
 
-type MetaSignupSelection = { wabaId?: string; phoneNumberId?: string };
+type MetaSignupSelection = { wabaId?: string; phoneNumberId?: string; redirectUri?: string };
 
 export async function exchangeMetaCode(orgId: string, code: string, selection: MetaSignupSelection = {}) {
   const { data: sess } = await supabase.auth.getSession();
@@ -683,6 +683,7 @@ export async function exchangeMetaCode(orgId: string, code: string, selection: M
       code,
       waba_id: selection.wabaId,
       phone_number_id: selection.phoneNumberId,
+      redirect_uri: selection.redirectUri,
     }),
   });
   const out = await res.json().catch(() => ({}));

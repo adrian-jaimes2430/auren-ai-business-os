@@ -44,7 +44,7 @@ Deno.serve(async (req: Request) => {
     const { data: userData, error: userErr } = await userClient.auth.getUser();
     if (userErr || !userData.user) return json(401, { error: "No autenticado" });
 
-    const { organization_id, code, waba_id, phone_number_id } = await req.json();
+    const { organization_id, code, waba_id, phone_number_id, redirect_uri } = await req.json();
     if (!organization_id || !code) return json(400, { error: "Faltan parámetros" });
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -63,6 +63,7 @@ Deno.serve(async (req: Request) => {
     tokenUrl.searchParams.set("client_id", META_APP_ID);
     tokenUrl.searchParams.set("client_secret", META_APP_SECRET);
     tokenUrl.searchParams.set("code", code);
+    if (redirect_uri) tokenUrl.searchParams.set("redirect_uri", redirect_uri);
     const tokenRes = await fetch(tokenUrl.toString());
     const tokenJson = await tokenRes.json();
     if (!tokenRes.ok || !tokenJson.access_token) {
