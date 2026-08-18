@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { META_APP_ID, META_WA_CONFIG_ID } from "@/config/meta";
 import { useOrganization } from "@/hooks/use-organization";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -589,8 +590,8 @@ function EditChannelDialog({ channel, onSaved, onClose }: {
 }
 
 function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; disabled: boolean; onConnected: () => void }) {
-  const metaAppId = import.meta.env.VITE_META_APP_ID as string | undefined;
-  const metaConfigId = import.meta.env.VITE_META_WA_CONFIG_ID as string | undefined;
+  const metaAppId = META_APP_ID;
+  const metaConfigId = META_WA_CONFIG_ID;
   const [loading, setLoading] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
@@ -700,7 +701,7 @@ function MetaConnectBanner({ orgId, disabled, onConnected }: { orgId: string; di
             </li>
             <li>Solicita el caso de uso <strong>WhatsApp Business Platform</strong> con permisos <code>whatsapp_business_management</code>, <code>whatsapp_business_messaging</code> y <code>business_management</code>.</li>
             <li>Crea una <strong>configuration</strong> de Embedded Signup en el panel de WhatsApp y copia el <code>config_id</code>.</li>
-            <li>Añade dos variables al proyecto: <code>VITE_META_APP_ID</code> y <code>VITE_META_WA_CONFIG_ID</code>. Cuando estén configuradas este botón abre el popup oficial de Meta y conecta las cuentas automáticamente.</li>
+            <li>App ID y config ID ya están configurados en la plataforma. Solo falta el <code>META_APP_SECRET</code> en el backend para poder canjear el código por un token permanente.</li>
           </ol>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowHelp(false)}>Entendido</Button>
