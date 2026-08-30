@@ -1,0 +1,240 @@
+/**
+ * Story theme — "Auren en el vacío"
+ * Basado en el modelo de diseño extraído de activetheory.net
+ * (DESIGN.md / theme.css / tokens.json / variables.css).
+ *
+ * IMPORTANTE: todo vive bajo el selector `.story-home` para no tocar
+ * ni un solo token del tema interno del CRM (:root en src/styles.css).
+ * Nada aquí se filtra fuera de la homepage.
+ */
+
+.story-home {
+  /* Colores — Active Theory palette */
+  --story-void: #000000;
+  --story-white: #ffffff;
+  --story-ash: #4d4d4d;
+  --story-smoke: #808080;
+  --story-fog: #999999;
+  --story-mist: #c6c6c6;
+  --story-violet: #343755;
+  --story-violet-soft: #4a4e78;
+
+  /* Superficies */
+  --story-surface-overlay: rgba(0, 0, 0, 0.5);
+  --story-surface-glass: rgba(255, 255, 255, 0.1);
+  --story-surface-frosted: rgba(255, 255, 255, 0.1);
+  --story-surface-black-tonal: rgba(0, 0, 0, 0.333);
+
+  /* Tipografía */
+  --story-font-sans: "Space Grotesk", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  --story-font-serif: "Times New Roman", Times, Georgia, serif;
+
+  /* Espaciado */
+  --story-space-4: 4px;
+  --story-space-6: 6px;
+  --story-space-12: 12px;
+  --story-space-13: 13px;
+  --story-space-14: 14px;
+  --story-space-16: 16px;
+  --story-space-18: 18px;
+  --story-space-28: 28px;
+  --story-section-gap: 48px;
+  --story-card-padding: 28px;
+
+  /* Radios */
+  --story-radius-md: 5px;
+  --story-radius-xl: 12px;
+  --story-radius-full: 500px;
+
+  background: var(--story-void);
+  color: var(--story-white);
+  font-family: var(--story-font-serif);
+  position: relative;
+  isolation: isolate;
+}
+
+.story-home * {
+  box-sizing: border-box;
+}
+
+/* ---------- Tipografía ---------- */
+
+.story-home .s-eyebrow {
+  font-family: var(--story-font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--story-mist);
+}
+
+.story-home .s-display {
+  font-family: var(--story-font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.04;
+  color: var(--story-white);
+}
+
+.story-home .s-body {
+  font-family: var(--story-font-serif);
+  font-size: 16px;
+  line-height: 1.88;
+  color: var(--story-mist);
+}
+
+.story-home .s-label {
+  font-family: var(--story-font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--story-fog);
+}
+
+/* ---------- Botón ghost de navegación ---------- */
+
+.story-home .s-ghost-nav {
+  font-family: var(--story-font-sans);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--story-white);
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: var(--story-radius-md);
+  padding: 6px 14px;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+  white-space: nowrap;
+}
+
+.story-home .s-ghost-nav:hover {
+  border-color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ---------- Botón píldora (Dusk Violet) ---------- */
+
+.story-home .s-pill-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--story-font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--story-white);
+  background: var(--story-violet);
+  border-radius: var(--story-radius-full);
+  padding: 12px 26px;
+  transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+  border: none;
+}
+
+.story-home .s-pill-primary:hover {
+  background: var(--story-violet-soft);
+  transform: translateY(-1px);
+}
+
+.story-home .s-pill-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--story-font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--story-white);
+  background: var(--story-surface-black-tonal);
+  border: 1px solid var(--story-ash);
+  border-radius: var(--story-radius-full);
+  padding: 11px 26px;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.story-home .s-pill-ghost:hover {
+  border-color: var(--story-fog);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ---------- Ghost card ---------- */
+
+.story-home .s-card {
+  background: transparent;
+  border: 1px solid var(--story-ash);
+  border-radius: var(--story-radius-xl);
+  padding: var(--story-card-padding);
+  transition: border-color 0.4s ease, background-color 0.4s ease;
+}
+
+.story-home .s-card:hover {
+  border-color: var(--story-fog);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ---------- Divisor hairline ---------- */
+
+.story-home .s-hr {
+  border: none;
+  border-top: 1px solid var(--story-ash);
+}
+
+/* ---------- Enlace hairline ---------- */
+
+.story-home .s-link {
+  color: var(--story-mist);
+  font-family: var(--story-font-serif);
+  font-size: 16px;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(198, 198, 198, 0.35);
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.story-home .s-link:hover {
+  color: var(--story-white);
+  border-color: var(--story-white);
+}
+
+/* ---------- Panel translúcido / vidrio esmerilado ---------- */
+
+.story-home .s-glass {
+  background: var(--story-surface-overlay);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- Punto separador de nav ---------- */
+
+.story-home .s-dot {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--story-smoke);
+}
+
+/* ---------- Utilidades de movimiento ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .story-home .s-float {
+    animation: story-float 7s ease-in-out infinite;
+  }
+}
+
+@keyframes story-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.story-home .s-noise {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* ---------- Scrollbar (solo dentro de story-home) ---------- */
+
+.story-home {
+  scrollbar-color: var(--story-ash) transparent;
+}
