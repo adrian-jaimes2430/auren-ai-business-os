@@ -1,36 +1,57 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Navbar } from "@/components/site/Navbar";
-import { Footer } from "@/components/site/Footer";
-import { Hero } from "@/components/site/Hero";
-import { Features } from "@/components/site/Features";
-import { AISection } from "@/components/site/AISection";
-import { Integrations } from "@/components/site/Integrations";
-import { Pricing } from "@/components/site/Pricing";
-import { CTA } from "@/components/site/CTA";
+import "@/styles/story.css";
+import { StoryNav } from "@/components/site/story/StoryNav";
+import { StoryHero } from "@/components/site/story/StoryHero";
+import { StoryFeatures } from "@/components/site/story/StoryFeatures";
+import { StoryAI } from "@/components/site/story/StoryAI";
+import { StoryIntegrations } from "@/components/site/story/StoryIntegrations";
+import { StoryPricing } from "@/components/site/story/StoryPricing";
+import { StoryCTA } from "@/components/site/story/StoryCTA";
+import { StoryFooter } from "@/components/site/story/StoryFooter";
 
 export const Route = createFileRoute("/")({
   component: Landing,
   head: () => ({
     meta: [
       { title: "AUREN AI — CRM + IA + Omnicanal" },
-      { name: "description", content: "El sistema operativo comercial inteligente. CRM, IA, automatización y omnicanal en una sola plataforma." },
+      {
+        name: "description",
+        content:
+          "El sistema operativo comercial inteligente. CRM, IA, automatización y omnicanal en una sola plataforma.",
+      },
+      { property: "og:title", content: "AUREN AI — CRM + IA + Omnicanal" },
+      {
+        property: "og:description",
+        content:
+          "Unifica CRM, inteligencia artificial, automatización y todos tus canales en un solo sistema operativo comercial.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap",
+      },
     ],
   }),
 });
 
 function Landing() {
   return (
-    <>
-      <Navbar />
+    <div className="story-home">
+      <StoryNav />
       <main>
-        <Hero />
-        <Features />
-        <AISection />
-        <Integrations />
-        <Pricing />
-        <CTA />
+        <StoryHero />
+        <StoryFeatures />
+        <StoryAI />
+        <StoryIntegrations />
+        <StoryPricing />
+        <StoryCTA />
       </main>
-      <Footer />
-    </>
+      <StoryFooter />
+    </div>
   );
 }
